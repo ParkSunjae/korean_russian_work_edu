@@ -2,6 +2,7 @@ export interface Notice {
   id: string;
   title: string;
   content: string;
-  createdAt: string;
+  date: string;
+  createdAt?: string;
   updatedAt?: string;
-} 
+}
