@@ -132,19 +132,18 @@ export default function Home() {
             </p>
           </div>
 
-          {/* 자주 찾는 메뉴 카드 */}
+          {/* 메뉴 선택 횟수 카드 */}
           <div className="bg-white p-4 rounded-lg shadow">
             <h2 className="text-lg font-bold mb-3">
-              자주 찾는 메뉴
+              메뉴 선택 횟수
               <span className="block text-sm text-gray-600 mt-1">
-                Часто посещаемые разделы
+                Количество выборов меню
               </span>
             </h2>
             <div className="space-y-2">
               {stats?.menuStats && Object.entries(stats.menuStats)
                 .filter(([menuId]) => menuId !== 'home')
                 .sort(([,a], [,b]) => b.count - a.count)
-                .slice(0, 5)
                 .map(([menuId, menuStat]) => (
                   <div key={menuId} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded text-sm">
                     <span className="flex-1">
