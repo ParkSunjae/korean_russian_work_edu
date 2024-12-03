@@ -88,7 +88,7 @@ const sentences = [
 
 export default function SentencesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const categories = ["all", ...new Set(sentences.map((s) => s.category))];
+  const categories = ["all", ...Array.from(new Set(sentences.map((s) => s.category)))];
 
   const filteredSentences = selectedCategory === "all" ? sentences : sentences.filter((s) => s.category === selectedCategory);
 
