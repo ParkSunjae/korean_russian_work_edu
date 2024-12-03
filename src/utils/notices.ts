@@ -11,7 +11,11 @@ export async function readNotices(): Promise<Notice[]> {
     return JSON.parse(data);
   } catch (error) {
     // 파일이 없는 경우 빈 배열 반환
-    return [];
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      await writeNotices([]);
+      return [];
+    }
+    throw error;
   }
 }
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Notice } from "@/types/notice";
-import Link from "next/link";
 
 export default function Home() {
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -10,69 +9,58 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/api/notices")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch notices");
+        return res.json();
+      })
       .then((data) => {
-        // 최신 3개만 필터링
         const latestNotices = [...data].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
         setNotices(latestNotices);
+      })
+      .catch((error) => {
+        console.error("Error fetching notices:", error);
+        setNotices([]);
       });
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {viewingNotice ? (
-        // 상세 보기 화면
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="border-b pb-4 mb-4">
-            <h3 className="text-xl font-bold mb-2">{viewingNotice.title}</h3>
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>작성일: {viewingNotice.createdAt ? new Date(viewingNotice.createdAt).toLocaleDateString("ko-KR") : "-"}</span>
-              {viewingNotice.updatedAt && <span>수정일: {new Date(viewingNotice.updatedAt).toLocaleDateString("ko-KR")}</span>}
+    <main className="flex min-h-screen flex-col items-center p-4 lg:p-8">
+      <h1 className="text-3xl md:text-4xl font-bold text-center mb-6">
+        한국어 학습 플랫폼 | <span className="text-gray-600">Платформа изучения корейского языка</span>
+      </h1>
+      <p className="text-lg text-gray-600 text-center max-w-2xl mb-12">
+        한글 자음, 모음부터 문장까지 단계별로 학습하세요 | Изучайте корейский язык шаг за шагом
+      </p>
+
+      <div className="w-full max-w-4xl bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-xl font-bold mb-4">최근 공지사항 | Последние объявления</h2>
+        {viewingNotice ? (
+          <div className="space-y-4">
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold">{viewingNotice.title}</h3>
+              <div className="text-sm text-gray-500 mt-1">{viewingNotice.createdAt && new Date(viewingNotice.createdAt).toLocaleDateString("ko-KR")}</div>
             </div>
-          </div>
-          <div className="min-h-[200px] whitespace-pre-wrap mb-6">{viewingNotice.content}</div>
-          <div className="flex justify-end">
-            <button onClick={() => setViewingNotice(null)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+            <div className="min-h-[100px] whitespace-pre-wrap">{viewingNotice.content}</div>
+            <button
+              onClick={() => setViewingNotice(null)}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+            >
               목록으로
             </button>
           </div>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">공지사항</h2>
-            <Link href="/notices" className="text-sm text-blue-600 hover:text-blue-800">
-              더보기
-            </Link>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-300 rounded-lg">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-600">번호</th>
-                  <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-600">제목</th>
-                  <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-600">날짜</th>
-                </tr>
-              </thead>
-              <tbody>
-                {notices.map((notice, index) => (
-                  <tr key={notice.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 border-b text-sm text-gray-500">{notices.length - index}</td>
-                    <td className="px-6 py-4 border-b text-sm">
-                      <button onClick={() => setViewingNotice(notice)} className="font-medium text-blue-600 hover:text-blue-800 text-left">
-                        {notice.title}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 border-b text-sm text-gray-500">
-                      {notice.createdAt ? new Date(notice.createdAt).toLocaleDateString("ko-KR") : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-    </div>
+        ) : (
+          <ul className="divide-y">
+            {notices.map((notice) => (
+              <li key={notice.id} className="py-3">
+                <button onClick={() => setViewingNotice(notice)} className="w-full text-left group">
+                  <div className="font-medium group-hover:text-blue-600 transition-colors">{notice.title}</div>
+                  <div className="text-sm text-gray-500 mt-1">{notice.createdAt && new Date(notice.createdAt).toLocaleDateString("ko-KR")}</div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </main>
   );
 }

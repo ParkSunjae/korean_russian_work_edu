@@ -3,13 +3,12 @@ const path = require("path");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "@": path.resolve(__dirname, "src"),
-    };
-    return config;
+  reactStrictMode: false,
+  images: {
+    domains: ["localhost"],
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
   },
 };
 
