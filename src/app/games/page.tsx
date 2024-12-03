@@ -1,434 +1,274 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import PageLayout from "@/components/PageLayout";
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const WORDS = [
+  { korean: "나무", russian: "Дерево", romanization: "namu" },
+  { korean: "하늘", russian: "Небо", romanization: "haneul" },
+  { korean: "바람", russian: "Ветер", romanization: "baram" },
+  { korean: "지구본", russian: "Глобус", romanization: "jigubon" },
+  { korean: "책상", russian: "Стол", romanization: "chaeksang" },
+  { korean: "희귀", russian: "Редкий", romanization: "huigwi" },
+  { korean: "전문", russian: "Специалист", romanization: "jeonmun" },
+];
 
 interface Word {
   korean: string;
   russian: string;
   romanization: string;
-  y: number;
   x: number;
-  speed: number;
-  angle: number;
-  amplitude: number;
+  y: number;
+  id: number;
 }
 
-interface Lighthouse {
-  health: number;
-  maxHealth: number;
-  width: number;
-  height: number;
-}
+const FallingWordsGame = () => {
+  const [gameState, setGameState] = useState<"ready" | "playing" | "ended">("ready");
+  const [score, setScore] = useState<number>(0);
+  const [lives, setLives] = useState<number>(10);
+  const [userInput, setUserInput] = useState<string>("");
+  const [fallingWords, setFallingWords] = useState<Word[]>([]);
+  const [matchedWords, setMatchedWords] = useState<Word[]>([]);
+  const [speed, setSpeed] = useState<number>(2000);
+  const [level, setLevel] = useState<number>(1);
+  const [displayMode, setDisplayMode] = useState<"korean" | "russian" | "romanization">("korean");
+  const [selectedLevel, setSelectedLevel] = useState<number>(1);
 
-export default function GamesPage() {
-  const [words, setWords] = useState<Word[]>([]);
-  const [score, setScore] = useState(0);
-  const [isListening, setIsListening] = useState(false);
-  const [currentWord, setCurrentWord] = useState<Word | null>(null);
-  const [gameOver, setGameOver] = useState(false);
-  const [lighthouse, setLighthouse] = useState<Lighthouse>({
-    health: 10,
-    maxHealth: 10,
-    width: 60,
-    height: 120,
-  });
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  const recognitionRef = useRef<any>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationFrameRef = useRef<number>();
-
-  const sampleWords = [
-    { korean: "안녕", russian: "Привет", romanization: "annyeong" },
-    { korean: "감사", russian: "Спасибо", romanization: "gamsa" },
-    // ... 더 많은 단어 추가
-  ];
-
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const generateWord = useCallback(() => {
+    const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+    const randomX = Math.random() * 80 + 10;
+    return {
+      ...randomWord,
+      x: randomX,
+      y: 0,
+      id: Date.now(),
+    };
+  }, []);
 
   useEffect(() => {
-    // Web Speech API 초기화
-    if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.lang = "ko-KR";
+    let gameLoop: NodeJS.Timeout;
+    let wordGenerator: NodeJS.Timeout;
 
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        checkPronunciation(transcript);
-      };
+    if (gameState === "playing") {
+      wordGenerator = setInterval(() => {
+        setFallingWords((prev) => [...prev, generateWord()]);
+      }, 3000);
+
+      gameLoop = setInterval(() => {
+        setFallingWords((prev) => {
+          const newWords = prev
+            .map((word) => ({
+              ...word,
+              y: word.y + 1,
+            }))
+            .filter((word) => {
+              if (word.y >= 90) {
+                setLives((lives) => lives - 1);
+                return false;
+              }
+              return true;
+            });
+          return newWords;
+        });
+      }, speed);
     }
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+      clearInterval(gameLoop);
+      clearInterval(wordGenerator);
     };
-  }, []);
+  }, [gameState, speed, generateWord]);
 
   useEffect(() => {
-    // 화면 크기에 따른 캔버스 크기 조정
-    const handleResize = () => {
-      const width = Math.min(800, window.innerWidth - 32); // 패딩 고려
-      const height = (width * 3) / 4; // 4:3 비율 유지
-      setCanvasSize({ width, height });
-
-      // 캔버스 크기가 변경되면 현재 컨텍스트도 업데이트
-      if (canvasRef.current) {
-        canvasRef.current.width = width;
-        canvasRef.current.height = height;
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    // 모바일 체크
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const drawWater = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-    // 물결 효과를 위한 그라데이션
-    const gradient = ctx.createLinearGradient(0, canvas.height - 100, 0, canvas.height);
-    gradient.addColorStop(0, "#2196F3");
-    gradient.addColorStop(1, "#1976D2");
-
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-
-    // 물결 효과
-    ctx.moveTo(0, canvas.height - 50);
-    for (let x = 0; x <= canvas.width; x += 50) {
-      const y = canvas.height - 30 + Math.sin(Date.now() / 500 + x / 50) * 10;
-      ctx.lineTo(x, y);
+    if (lives <= 0) {
+      setGameState("ended");
     }
-    ctx.lineTo(canvas.width, canvas.height);
-    ctx.lineTo(0, canvas.height);
-    ctx.closePath();
-    ctx.fill();
-  };
+  }, [lives]);
 
-  const drawLighthouse = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-    const x = canvas.width / 2 - lighthouse.width / 2;
-    const y = canvas.height - lighthouse.height - 30; // 물 위에 위치
-
-    // 등대 기둥
-    ctx.fillStyle = "#E0E0E0";
-    ctx.fillRect(x, y + 40, lighthouse.width, lighthouse.height - 40);
-
-    // 등대 상단
-    ctx.fillStyle = "#F44336";
-    ctx.beginPath();
-    ctx.moveTo(x, y + 40);
-    ctx.lineTo(x + lighthouse.width / 2, y);
-    ctx.lineTo(x + lighthouse.width, y + 40);
-    ctx.closePath();
-    ctx.fill();
-
-    // 생명력 바
-    const healthBarWidth = 100;
-    const healthBarHeight = 10;
-    const healthBarX = x - (healthBarWidth - lighthouse.width) / 2;
-    const healthBarY = y - 20;
-
-    // 배경
-    ctx.fillStyle = "#E0E0E0";
-    ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
-
-    // 생명력
-    ctx.fillStyle = "#4CAF50";
-    const currentHealth = (lighthouse.health / lighthouse.maxHealth) * healthBarWidth;
-    ctx.fillRect(healthBarX, healthBarY, currentHealth, healthBarHeight);
-  };
-
-  const drawWord = (ctx: CanvasRenderingContext2D, word: Word) => {
-    ctx.save(); // 현재 컨텍스트 상태 저장
-
-    // 텍스트 측정을 위한 폰트 설정
-    ctx.font = "bold 24px Arial";
-    const metrics = ctx.measureText(word.korean);
-    const padding = 8;
-    const bgWidth = metrics.width + padding * 2;
-    const bgHeight = 40;
-
-    // 배경 그리기
-    ctx.fillStyle = word === currentWord ? "rgba(76, 175, 80, 0.2)" : "rgba(255, 255, 255, 0.9)";
-    ctx.fillRect(word.x - padding, word.y - bgHeight / 2, bgWidth, bgHeight);
-
-    // 한국어 텍스트
-    ctx.fillStyle = word === currentWord ? "#4CAF50" : "#000";
-    ctx.textBaseline = "middle";
-    ctx.fillText(word.korean, word.x, word.y);
-
-    // 러시아어 텍스트
-    ctx.font = "12px Arial";
-    ctx.fillStyle = "#666";
-    ctx.fillText(word.russian, word.x, word.y + bgHeight / 2 + 4);
-
-    ctx.restore(); // 컨텍스트 상태 복원
-  };
+  useEffect(() => {
+    const newLevel = Math.floor(score / 20) + 1;
+    if (newLevel !== level) {
+      setLevel(newLevel);
+      setSpeed((prev) => Math.max(prev * 0.9, 500));
+    }
+  }, [score, level]);
 
   const startGame = () => {
-    // 게임 상태 초기화
-    setIsPlaying(true);
-    setGameOver(false);
+    setGameState("playing");
     setScore(0);
-    setWords([]);
-    setLighthouse((prev) => ({ ...prev, health: prev.maxHealth }));
+    setLives(selectedLevel === 1 ? 10 : selectedLevel === 2 ? 7 : 5); // 레벨에 따른 목숨 설정
+    setFallingWords([]);
+    setMatchedWords([]);
+    setSpeed(selectedLevel === 1 ? 2000 : selectedLevel === 2 ? 1500 : 1000); // 레벨에 따른 속도 설정
+    setLevel(1);
+  };
 
-    // 캔버스 초기화 및 첫 렌더링
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      if (ctx) {
-        // 초기 화면 그리기
-        drawInitialScreen(ctx, canvasRef.current);
+  const endGame = () => {
+    setGameState("ended");
+  };
 
-        // 첫 단어 생성
-        const firstWord = {
-          ...sampleWords[Math.floor(Math.random() * sampleWords.length)],
-          y: 0,
-          x: canvasRef.current.width / 2 - 50, // 화면 중앙에서 시작
-          speed: 1 + Math.random() * 2,
-          angle: Math.random() * Math.PI * 2,
-          amplitude: 30 + Math.random() * 50,
-        };
+  const checkAnswer = (input: string, word: Word) => {
+    const normalizedInput = input.toLowerCase().trim();
+    const normalizedKorean = word.korean.toLowerCase();
+    const normalizedRussian = word.russian.toLowerCase();
+    const normalizedRomanization = word.romanization.toLowerCase();
 
-        setWords([firstWord]);
-        requestAnimationFrame(animate); // 애니메이션 시작
-        setTimeout(spawnWords, 2000); // 2초 후 추가 단어 생성 시작
+    return normalizedInput === normalizedKorean || normalizedInput === normalizedRussian || normalizedInput === normalizedRomanization;
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const input = userInput.trim();
+    if (!input) return;
+
+    const matchedWordIndex = fallingWords.findIndex((word) => checkAnswer(input, word));
+
+    if (matchedWordIndex !== -1) {
+      const matchedWord = fallingWords[matchedWordIndex];
+      setMatchedWords((prev) => [...prev, matchedWord]);
+      setScore((prev) => prev + 20);
+
+      setFallingWords((prev) => prev.filter((_, index) => index !== matchedWordIndex));
+
+      if ((score + 20) % 100 === 0) {
+        setLives((prev) => prev + 1);
       }
     }
+
+    setUserInput("");
   };
 
-  // 초기 화면 그리기 함수 추가
-  const drawInitialScreen = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-    // 배경 그리기
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height - 100);
-    gradient.addColorStop(0, "#87CEEB");
-    gradient.addColorStop(1, "#ADD8E6");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 물과 등대 그리기
-    drawWater(ctx, canvas);
-    drawLighthouse(ctx, canvas);
-  };
-
-  const animate = () => {
-    if (!canvasRef.current || !isPlaying) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // 1. 화면 초기화
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 2. 배경, 물, 등대 그리기
-    drawInitialScreen(ctx, canvas);
-
-    // 3. 단어 위치 업데이트
-    const updatedWords = words.map((word) => {
-      const wiggle = Math.sin(word.angle) * word.amplitude;
-      const newX = word.x + wiggle * 0.02;
-      const newY = word.y + word.speed;
-      const newAngle = word.angle + 0.02;
-      const boundedX = Math.max(50, Math.min(canvas.width - 50, newX));
-
-      // 바다에 닿았는지 확인
-      if (newY > canvas.height - 100) {
-        setLighthouse((prev) => {
-          const newHealth = Math.max(0, prev.health - 1);
-          if (newHealth === 0) {
-            setGameOver(true); // 생명력이 0일 때만 게임 오버
-          }
-          return { ...prev, health: newHealth };
-        });
-
-        // 새로운 위치에서 단어 재시작
-        return {
-          ...word,
-          y: 0,
-          x: Math.random() * (canvas.width - 100),
-          angle: Math.random() * Math.PI * 2,
-          speed: 1 + Math.random() * 2,
-        };
+  const toggleDisplayMode = () => {
+    setDisplayMode((current) => {
+      switch (current) {
+        case "korean":
+          return "russian";
+        case "russian":
+          return "romanization";
+        default:
+          return "korean";
       }
-
-      return {
-        ...word,
-        x: boundedX,
-        y: newY,
-        angle: newAngle,
-      };
     });
+  };
 
-    // 4. 업데이트된 단어들 그리기 (배경 위에)
-    updatedWords.forEach((word) => {
-      drawWord(ctx, word);
-    });
-
-    setWords(updatedWords);
-
-    if (!gameOver) {
-      animationFrameRef.current = requestAnimationFrame(animate);
+  const getDisplayText = (word: Word) => {
+    switch (displayMode) {
+      case "korean":
+        return `${word.korean} (${word.russian})`;
+      case "russian":
+        return `${word.russian} (${word.korean})`;
+      case "romanization":
+        return `${word.romanization} (${word.korean}, ${word.russian})`;
+      default:
+        return `${word.korean} (${word.russian})`;
     }
-  };
-
-  const spawnWords = () => {
-    if (gameOver) return;
-
-    const newWord = {
-      ...sampleWords[Math.floor(Math.random() * sampleWords.length)],
-      y: 0,
-      x: Math.random() * (canvasRef.current?.width || 800 - 100),
-      speed: 1 + Math.random() * 2, // 속도 범위 증가
-      angle: Math.random() * Math.PI * 2, // 랜덤 각도
-      amplitude: 30 + Math.random() * 50, // 좌우 움직임 폭
-    };
-
-    setWords((prev) => [...prev, newWord]);
-    setTimeout(spawnWords, 2000 + Math.random() * 2000); // 랜덤 간격으로 생성
-  };
-
-  const stopGame = () => {
-    setIsPlaying(false);
-    resetGame(); // 게임 상태 초기화
-  };
-
-  const resetGame = () => {
-    setIsPlaying(false);
-    setGameOver(false);
-    setScore(0);
-    setWords([]);
-    setLighthouse((prev) => ({ ...prev, health: prev.maxHealth }));
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-  };
-
-  const handleKeyPress = (e: KeyboardEvent) => {
-    if (e.key === "Enter") {
-      if (!isListening) {
-        // 마이크 시작
-        setIsListening(true);
-        recognitionRef.current?.start();
-      } else {
-        // 마이크 중지
-        setIsListening(false);
-        recognitionRef.current?.stop();
-      }
-    }
-  };
-
-  const checkPronunciation = (transcript: string) => {
-    if (!currentWord) return;
-
-    // 간단한 유사도 체크 (실제로는 더 복잡한 알고리즘 필요)
-    const similarity = calculateSimilarity(transcript, currentWord.korean);
-
-    if (similarity >= 0.7) {
-      setScore((prev) => prev + 100);
-      setWords((prev) => prev.filter((w) => w !== currentWord));
-      setCurrentWord(null);
-    }
-  };
-
-  const calculateSimilarity = (str1: string, str2: string): number => {
-    // 여기에 발음 유사도 체크 알고리즘 구현
-    // 예: Levenshtein distance 또는 다른 문자열 유사도 알고리즘 사용
-    return 0.8; // 임시 반환값
   };
 
   return (
-    <PageLayout title="발음 게임" titleRu="Игра произношения" showBackButton>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="space-x-4">
-            <span className="text-xl font-bold">점수: {score}</span>
-            <span className="text-xl font-bold">생명력: {lighthouse.health}</span>
+    <div className="p-4 bg-gray-50 min-h-screen">
+      <Card className="w-full max-w-4xl mx-auto bg-white">
+        <CardContent className="p-6">
+          <h1 className="text-2xl font-bold text-center mb-6">내려오는 단어 맞추기 / Угадай падающее слово</h1>
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4 bg-gray-100 p-4 rounded-lg">
+            <div className="flex gap-8">
+              <div className="text-lg font-bold">점수: {score} / Счет</div>
+              <div className="text-lg font-bold text-red-500">목숨: {lives} / Жизни</div>
+              <div className="text-lg font-bold text-blue-500">레벨: {level} / Уровень</div>
+            </div>
+            <Button onClick={toggleDisplayMode} className="bg-purple-500 hover:bg-purple-600 mt-4 md:mt-0">
+              {displayMode === "korean" ? "한국어" : displayMode === "russian" ? "러시아어" : "로마자"}
+            </Button>
           </div>
-          {isPlaying ? (
-            <button onClick={stopGame} className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
-              게임 종료
-            </button>
-          ) : (
-            <button onClick={startGame} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-              게임 시작
-            </button>
+
+          {gameState === "ready" && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">레벨 선택 / Выбор уровня:</label>
+              <select
+                value={selectedLevel}
+                onChange={(e) => setSelectedLevel(Number(e.target.value))}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              >
+                <option value={1}>초급 / Начальный</option>
+                <option value={2}>중급 / Средний</option>
+                <option value={3}>고급 / Продвинутый</option>
+              </select>
+            </div>
           )}
-        </div>
 
-        <div className="w-full flex justify-center">
-          <canvas
-            ref={canvasRef}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            className={`border border-gray-200 rounded-lg bg-white ${!isPlaying && "opacity-50"}`}
-          />
-        </div>
-
-        <div className="text-center space-y-2">
-          {isPlaying && (
-            <>
-              {isMobile ? (
-                // 모바일용 마이크 버튼
-                <button
-                  onClick={() => {
-                    if (!isListening) {
-                      setIsListening(true);
-                      recognitionRef.current?.start();
-                    } else {
-                      setIsListening(false);
-                      recognitionRef.current?.stop();
-                    }
-                  }}
-                  className={`
-                    px-6 py-3 rounded-full text-white transition-colors
-                    ${isListening ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}
-                  `}
-                >
-                  {isListening ? "마이크 끄기" : "마이크 켜기"}
-                </button>
-              ) : (
-                <div className={`text-lg ${isListening ? "text-green-500" : "text-gray-500"}`}>
-                  {isListening ? "말하세요..." : "Enter 키를 눌러 마이크 켜기"}
-                </div>
-              )}
-              {currentWord && <div className="text-sm text-gray-600">발음: {currentWord.romanization}</div>}
-            </>
-          )}
-          {!isPlaying && <div className="text-lg text-gray-500">게임을 시작하려면 위의 시작 버튼을 클릭하세요</div>}
-        </div>
-
-        {gameOver && lighthouse.health === 0 && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg text-center">
-              <h2 className="text-2xl font-bold mb-4">게임 오버!</h2>
-              <p className="mb-4">최종 점수: {score}</p>
-              <div className="space-x-4">
-                <button onClick={startGame} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-                  다시 시작
-                </button>
-                <button onClick={resetGame} className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
-                  나가기
-                </button>
+          <div className="relative h-96 border-2 border-gray-200 rounded-lg mb-4 overflow-hidden bg-gray-50">
+            {fallingWords.map((word) => (
+              <div
+                key={word.id}
+                className="absolute px-3 py-2 bg-white border border-gray-300 rounded shadow-sm"
+                style={{
+                  left: `${word.x}%`,
+                  top: `${word.y}%`,
+                  transform: "translateX(-50%)",
+                }}
+              >
+                {getDisplayText(word)}
               </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            {gameState === "ready" && (
+              <Button onClick={startGame} className="w-full bg-green-500 hover:bg-green-600">
+                게임 시작 / Начать игру
+              </Button>
+            )}
+
+            {gameState === "playing" && (
+              <div className="space-y-4">
+                <form onSubmit={handleInput} className="flex gap-2">
+                  <Input
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    placeholder="단어를 입력하세요 (한국어/러시아어/로마자) / Введите слово (корейский/русский/романизация)"
+                    className="flex-1"
+                    autoFocus
+                  />
+                  <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
+                    입력 / Ввод
+                  </Button>
+                  <Button onClick={endGame} variant="destructive">
+                    게임 종료 / Завершить игру
+                  </Button>
+                </form>
+              </div>
+            )}
+
+            {gameState === "ended" && (
+              <div className="space-y-4">
+                <Alert className="bg-blue-50 border-blue-200">
+                  <AlertDescription className="text-center text-lg font-bold">
+                    게임 종료! 최종 점수: {score} / 최고 레벨: {level} / Игра окончена! Итоговый счет: {score} / Максимальный уровень: {level}
+                  </AlertDescription>
+                </Alert>
+                <Button onClick={startGame} className="w-full bg-green-500 hover:bg-green-600">
+                  다시 시작 / Начать заново
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4">
+            <h3 className="font-bold mb-2">맞춘 단어 목록 / Список угаданных слов:</h3>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-lg">
+              {matchedWords.map((word, index) => (
+                <div key={index} className="bg-green-100 px-3 py-2 rounded text-sm">
+                  {word.korean} - {word.russian} ({word.romanization})
+                </div>
+              ))}
             </div>
           </div>
-        )}
-      </div>
-    </PageLayout>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};
+
+export default FallingWordsGame;
