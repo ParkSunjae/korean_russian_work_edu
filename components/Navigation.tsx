@@ -70,9 +70,10 @@ const Navigation = () => {
           ${isCollapsed ? "w-16" : "w-auto min-w-[4rem] max-w-[20rem]"}
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           z-40
+          overflow-hidden
         `}
       >
-        <ul className="pt-20 lg:pt-6 px-2 pb-6 space-y-2">
+        <ul className="pt-20 lg:pt-6 px-2 pb-6 space-y-2 h-full overflow-y-auto">
           {menuItems.map((item) => (
             <li key={item.href} className="relative group">
               <Link
