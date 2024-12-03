@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowLeft, Volume2, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { koreanDictionary, Word } from '@/utils/dictionary'
@@ -8,6 +8,44 @@ import { koreanDictionary, Word } from '@/utils/dictionary'
 export default function WordsPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
+
+  // 단어 검색/클릭 통계 업데이트 함수
+  const updateWordStats = async (word: Word) => {
+    try {
+      await fetch('/api/statistics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'word',
+          data: {
+            korean: word.korean,
+            russian: word.russian
+          }
+        })
+      });
+    } catch (error) {
+      console.error('단어 통계 업데이트 실패:', error);
+    }
+  };
+
+  // 단어 검색 처리
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    // 검색어가 정확히 매치되는 단어가 있으면 통계 업데이트
+    const exactMatch = koreanDictionary.find(
+      word => word.korean === term || word.russian === term
+    );
+    if (exactMatch) {
+      updateWordStats(exactMatch);
+    }
+  };
+
+  // 단어 클릭 처리
+  const handleWordClick = (word: Word) => {
+    updateWordStats(word);
+  };
 
   const filteredWords = koreanDictionary.filter((word: Word) => 
     word.korean.includes(searchTerm) ||
@@ -44,7 +82,7 @@ export default function WordsPage() {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             placeholder="한국어, 영어 또는 러시아어로 검색"
             className="w-full pl-10 pr-4 py-2 border rounded-md"
           />
@@ -57,7 +95,8 @@ export default function WordsPage() {
         {filteredWords.map((word) => (
           <div 
             key={word.korean}
-            className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+            className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleWordClick(word)}
           >
             <div className="flex justify-between items-center mb-4">
               <div className="text-3xl font-bold text-blue-600">

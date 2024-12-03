@@ -31,7 +31,7 @@ const sentences = [
     romanization: "joesonghamnida",
     category: "인사",
     level: "초급",
-    definition: "상대방에게 미안한 마음을 정중하게 표현하는 말",
+    definition: "상대방에게 미안한 마음을 ���중하게 표현하는 말",
     definition_ru: "Вежливое выражение сожаления или извинения",
   },
   {
@@ -336,13 +336,20 @@ const sentences = [
   },
 ] as const;
 
-const categories = ["all", ...Array.from(new Set(sentences.map((s) => s.category)))] as const;
-type Category = typeof categories[number];
-const [selectedCategory, setSelectedCategory] = useState<Category>("all");
-
-const filteredSentences = selectedCategory === "all" ? sentences : sentences.filter((s) => s.category === selectedCategory);
+// 카테고리 타입 정의
+const CATEGORIES = ["all", "인사", "식사", "안부", "축하", "응원", "질문", "예의", "응답", "초대"] as const;
+type Category = (typeof CATEGORIES)[number];
 
 export default function SentencesPage() {
+  const [selectedCategory, setSelectedCategory] = useState<Category>("all");
+
+  // 실제 카테고리 목록 생성 (sentences 데이터의 카테고리 포함)
+  const categories = Array.from(new Set(["all", ...sentences.map(s => s.category)]));
+
+  const filteredSentences = selectedCategory === "all" 
+    ? sentences 
+    : sentences.filter((s) => s.category === selectedCategory);
+
   return (
     <PageLayout title="문장" titleRu="Предложения" showBackButton>
       <div className="space-y-6">
@@ -350,9 +357,11 @@ export default function SentencesPage() {
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => setSelectedCategory(category as Category)}
               className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                selectedCategory === category ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                selectedCategory === category 
+                  ? "bg-blue-500 text-white" 
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               {category === "all" ? "전체" : category}

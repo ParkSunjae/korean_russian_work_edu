@@ -282,46 +282,65 @@ const FallingWordsGame = () => {
     }
   };
 
-  const renderPlayingControls = () => (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <Button onClick={endGame} variant="destructive">
-          게임 종료 / Завершить игру
-        </Button>
-      </div>
-      {transcript && (
-        <div className="text-sm text-gray-600">
-          인식된 음성: {transcript} / Распознанный голос
-        </div>
+  const VoiceStatus = ({ isListening }: { isListening: boolean }) => (
+    <div className="flex items-center gap-2 text-sm">
+      {isListening ? (
+        <>
+          <Mic className="w-4 h-4 text-green-500 animate-pulse" />
+          <span className="text-green-600">음성 인식 활성화 / Голосовой ввод активен</span>
+        </>
+      ) : (
+        <>
+          <MicOff className="w-4 h-4 text-red-500" />
+          <span className="text-red-600">음성 인식 비활성화 / Голосовой ввод отключен</span>
+        </>
       )}
     </div>
   );
 
   return (
-    <div className="p-4 bg-gray-50 min-h-screen">
+    <div className="p-2 sm:p-4 bg-gray-50 min-h-screen">
       <Card className="w-full max-w-4xl mx-auto bg-white">
-        <CardContent className="p-6">
-          <h1 className="text-2xl font-bold text-center mb-6">
-            내려오는 단어를 말해서 맞추기 / Произнесите падающие слова
+        <CardContent className="p-3 sm:p-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-center mb-4">
+            내려오는 단어를 말해서 맞추기
+            <span className="block text-lg sm:text-xl text-gray-600 mt-1">
+              Произнесите падающие слова
+            </span>
           </h1>
-          <div className="flex flex-col md:flex-row justify-between items-center mb-4 bg-gray-100 p-4 rounded-lg">
-            <div className="flex gap-8">
-              <div className="text-lg font-bold">점수: {score} / Счет</div>
-              <div className="text-lg font-bold text-red-500">목숨: {lives} / Жизни</div>
-              <div className="text-lg font-bold text-blue-500">레벨: {level} / Уровень</div>
+
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 bg-gray-100 p-3 rounded-lg">
+            <div className="grid grid-cols-3 gap-4 w-full sm:flex sm:gap-8 mb-3 sm:mb-0">
+              <div className="text-center sm:text-left">
+                <div className="text-sm text-gray-600">점수 / Счет</div>
+                <div className="text-lg font-bold">{score}</div>
+              </div>
+              <div className="text-center sm:text-left">
+                <div className="text-sm text-gray-600">목숨 / Жизни</div>
+                <div className="text-lg font-bold text-red-500">{lives}</div>
+              </div>
+              <div className="text-center sm:text-left">
+                <div className="text-sm text-gray-600">레벨 / Уровень</div>
+                <div className="text-lg font-bold text-blue-500">{level}</div>
+              </div>
             </div>
-            <Button onClick={toggleDisplayMode} className="bg-purple-500 hover:bg-purple-600 mt-4 md:mt-0">
+            <Button 
+              onClick={toggleDisplayMode} 
+              className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600"
+            >
               {displayMode === "korean" ? "한국어" : displayMode === "russian" ? "러시아어" : "로마자"}
             </Button>
           </div>
 
           {gameState === "ready" && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">레벨 선택 / Выбор уровня:</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                레벨 선택 / Выбор уровня:
+              </label>
               <select
                 value={selectedLevel}
                 onChange={(e) => setSelectedLevel(Number(e.target.value))}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                className="w-full p-2 border rounded-md text-base"
               >
                 <option value={1}>초급 / Начальный</option>
                 <option value={2}>중급 / Средний</option>
@@ -330,11 +349,11 @@ const FallingWordsGame = () => {
             </div>
           )}
 
-          <div className="relative h-96 border-2 border-gray-200 rounded-lg mb-4 overflow-hidden bg-gray-50">
+          <div className="relative h-[50vh] sm:h-96 border-2 border-gray-200 rounded-lg mb-4 overflow-hidden bg-gray-50">
             {fallingWords.map((word) => (
               <div
                 key={word.id}
-                className={`absolute px-3 py-2 bg-white border border-gray-300 rounded shadow-sm transition-all duration-200
+                className={`absolute px-2 sm:px-3 py-1 sm:py-2 bg-white border border-gray-300 rounded shadow-sm transition-all duration-200 text-sm sm:text-base
                   ${word.matched ? 'opacity-0 scale-150 text-green-500' : ''}`}
                 style={{
                   left: `${word.x}%`,
@@ -347,20 +366,40 @@ const FallingWordsGame = () => {
             ))}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {gameState === "ready" && (
               <Button onClick={startGame} className="w-full bg-green-500 hover:bg-green-600">
                 게임 시작 / Начать игру
               </Button>
             )}
 
-            {gameState === "playing" && renderPlayingControls()}
+            {gameState === "playing" && (
+              <div className="space-y-3">
+                <div className="flex flex-col gap-2">
+                  <Button onClick={endGame} variant="destructive" className="w-full">
+                    게임 종료 / Завершить игру
+                  </Button>
+                  <VoiceStatus isListening={isListening} />
+                </div>
+                {transcript && (
+                  <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                    인식된 음성: {transcript} / Распознанный голос
+                  </div>
+                )}
+              </div>
+            )}
 
             {gameState === "ended" && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <Alert className="bg-blue-50 border-blue-200">
-                  <AlertDescription className="text-center text-lg font-bold">
-                    게임 종료! 최종 점수: {score} / 최고 레벨: {level} / Игра окончена! Итоговый счет: {score} / Максимальный уровень: {level}
+                  <AlertDescription className="text-center">
+                    <div className="font-bold text-lg">게임 종료! / Игра окончена!</div>
+                    <div className="text-sm mt-1">
+                      최종 점수: {score} / 최고 레벨: {level}
+                    </div>
+                    <div className="text-sm">
+                      Итоговый счет: {score} / Максимальный уровень: {level}
+                    </div>
                   </AlertDescription>
                 </Alert>
                 <Button onClick={startGame} className="w-full bg-green-500 hover:bg-green-600">
@@ -371,20 +410,22 @@ const FallingWordsGame = () => {
           </div>
 
           <div className="mt-4">
-            <h3 className="font-bold mb-2">맞춘 단어 목록 / Список угаданных слов:</h3>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-lg">
+            <h3 className="font-bold mb-2">
+              맞춘 단어 목록 / Список угаданных слов:
+            </h3>
+            <div className="flex flex-wrap gap-2 max-h-28 sm:max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-lg">
               {matchedWords.map((word, index) => (
                 <div 
                   key={index} 
-                  className="bg-green-100 px-3 py-2 rounded text-sm flex items-center gap-2"
+                  className="bg-green-100 px-2 py-1 rounded text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
                 >
                   <span>
-                    {word.korean} - {word.russian} ({word.romanization})
+                    {word.korean} - {word.russian}
                   </span>
-                  <span className="bg-green-200 px-2 py-1 rounded-full text-xs">
+                  <span className="bg-green-200 px-1.5 py-0.5 rounded-full text-xs">
                     {word.count}회
                   </span>
-                  <span className="bg-blue-200 px-2 py-1 rounded-full text-xs">
+                  <span className="bg-blue-200 px-1.5 py-0.5 rounded-full text-xs">
                     {word.totalScore}점
                   </span>
                 </div>
