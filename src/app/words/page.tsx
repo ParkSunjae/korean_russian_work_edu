@@ -11,17 +11,19 @@ export default function WordsPage() {
 
   const filteredWords = koreanDictionary.filter((word: Word) => 
     word.korean.includes(searchTerm) ||
-    word.english.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (word.english?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     word.russian.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const playAudio = (word: string) => {
-    const audio = new Audio(`/audio/words/${word}.mp3`)
-    audio.play().catch(error => {
-      console.error('오디오 재생 실패:', error)
-      alert('오디오 파일을 재생할 수 없습니다.')
-    })
-  }
+  const playAudio = async (word: string) => {
+    try {
+      const audio = new Audio(`/audio/words/${word}.mp3`);
+      await audio.play();
+    } catch (error) {
+      console.error('오디오 재생 실패:', error);
+      alert('오디오 파일을 재생할 수 없습니다. 파일이 존재하는지 확인해주세요.');
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -60,16 +62,6 @@ export default function WordsPage() {
             <div className="flex justify-between items-center mb-4">
               <div className="text-3xl font-bold text-blue-600">
                 {word.korean}
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <button
-                  onClick={() => playAudio(word.korean)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  aria-label={`${word.korean} 발음 듣기`}
-                >
-                  <Volume2 className="w-6 h-6 text-blue-600" />
-                </button>
-                <span className="text-xs text-gray-500">3번 반복</span>
               </div>
             </div>
             <div className="space-y-2">
