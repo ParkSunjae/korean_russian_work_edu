@@ -31,7 +31,7 @@ const sentences = [
     romanization: "joesonghamnida",
     category: "인사",
     level: "초급",
-    definition: "상대방에게 미안한 마음을 ���중하게 표현하는 말",
+    definition: "상대방에게 미안한 마음을 중하게 표현하는 말",
     definition_ru: "Вежливое выражение сожаления или извинения",
   },
   {
@@ -351,7 +351,7 @@ export default function SentencesPage() {
     : sentences.filter((s) => s.category === selectedCategory);
 
   return (
-    <PageLayout title="문장" titleRu="Предложения" showBackButton>
+    <PageLayout title="문장" titleRu="Предложения">
       <div className="space-y-6">
         <div className="flex gap-2 flex-wrap">
           {categories.map((category) => (

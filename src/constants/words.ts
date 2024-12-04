@@ -1,15 +1,13 @@
-import { koreanDictionary, Word } from "@/utils/dictionary";
+import { koreanDictionary } from "@/utils/dictionary";
 
 export interface WordType {
   korean: string;
   russian: string;
-  romanization: string;
   pronunciation: string;
 }
 
-export const WORDS: WordType[] = koreanDictionary.map((word: Word) => ({
+export const WORDS: WordType[] = koreanDictionary.map(word => ({
   korean: word.korean,
   russian: word.russian,
-  romanization: word.korean,
-  pronunciation: word.pronunciation || `[${word.korean}]`
+  pronunciation: word.pronunciation
 })); 

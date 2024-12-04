@@ -37,7 +37,7 @@ export default function NoticesPage() {
   const paginatedNotices = filteredNotices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <PageLayout title="공지사항" titleRu="Объявления" showBackButton>
+    <PageLayout title="공지사항" titleRu="Объявления">
       <div className="space-y-6">
         {!viewingNotice && (
           <div className="flex gap-4 items-center">

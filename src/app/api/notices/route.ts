@@ -1,61 +1,56 @@
-import { NextResponse } from "next/server";
-import { readNotices, writeNotices, deleteNotice } from "@/utils/notices";
-import { Notice } from "@/types/notice";
+import { NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
+import { Notice } from '@/types/notice';
+
+const NOTICES_FILE = path.join(process.cwd(), 'src/data/notices.json');
+
+async function readNotices(): Promise<Notice[]> {
+  try {
+    const data = await fs.readFile(NOTICES_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      await fs.writeFile(NOTICES_FILE, '[]');
+      return [];
+    }
+    throw error;
+  }
+}
+
+async function writeNotices(notices: Notice[]): Promise<void> {
+  await fs.writeFile(NOTICES_FILE, JSON.stringify(notices, null, 2));
+}
 
 export async function GET() {
   try {
     const notices = await readNotices();
     return NextResponse.json(notices);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch notices" }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch notices' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const notice: Notice = await request.json();
+    const notice = await request.json();
     const notices = await readNotices();
-
-    const newNotice = {
-      ...notice,
-      id: (notices.length + 1).toString(),
-      createdAt: new Date().toISOString(),
-    };
-
-    notices.push(newNotice);
+    notices.push({ ...notice, id: Date.now().toString(), createdAt: new Date().toISOString() });
     await writeNotices(notices);
-    return NextResponse.json(newNotice);
+    return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to create notice" }, { status: 500 });
-  }
-}
-
-export async function PUT(request: Request) {
-  try {
-    const notice: Notice = await request.json();
-    const notices = await readNotices();
-    const index = notices.findIndex((n) => n.id === notice.id);
-
-    if (index !== -1) {
-      notices[index] = {
-        ...notice,
-        updatedAt: new Date().toISOString(),
-      };
-      await writeNotices(notices);
-      return NextResponse.json(notices[index]);
-    }
-    return NextResponse.json({ error: "Notice not found" }, { status: 404 });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update notice" }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to add notice' }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
     const { id } = await request.json();
-    await deleteNotice(id);
+    const notices = await readNotices();
+    const filtered = notices.filter(notice => notice.id !== id);
+    await writeNotices(filtered);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete notice" }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to delete notice' }, { status: 500 });
   }
 }

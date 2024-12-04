@@ -1,9 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ArrowLeft, Volume2, Search } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { koreanDictionary, Word } from '@/utils/dictionary'
+import { Word, koreanDictionary } from "@/utils/dictionary";
+import PageLayout from '@/components/PageLayout'
+import { Card, CardContent } from '@/components/Card'
+
+const dictionary = koreanDictionary;
 
 export default function WordsPage() {
   const router = useRouter()
@@ -34,7 +38,7 @@ export default function WordsPage() {
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     // 검색어가 정확히 매치되는 단어가 있으면 통계 업데이트
-    const exactMatch = koreanDictionary.find(
+    const exactMatch = dictionary.find(
       word => word.korean === term || word.russian === term
     );
     if (exactMatch) {
@@ -47,7 +51,7 @@ export default function WordsPage() {
     updateWordStats(word);
   };
 
-  const filteredWords = koreanDictionary.filter((word: Word) => 
+  const filteredWords = dictionary.filter((word: Word) => 
     word.korean.includes(searchTerm) ||
     (word.english?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     word.russian.toLowerCase().includes(searchTerm.toLowerCase())
@@ -64,70 +68,72 @@ export default function WordsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          뒤로 가기
-        </button>
-        <h2 className="text-2xl font-bold">단어 사전</h2>
-      </div>
-
-      {/* 검색 영역 */}
-      <div className="mb-8">
-        <div className="relative">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="한국어, 영어 또는 러시아어로 검색"
-            className="w-full pl-10 pr-4 py-2 border rounded-md"
-          />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        </div>
-      </div>
-
-      {/* 단어 카드 그리드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredWords.map((word) => (
-          <div 
-            key={word.korean}
-            className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleWordClick(word)}
+    <PageLayout title="단어 사전" titleRu="Словарь">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
           >
-            <div className="flex justify-between items-center mb-4">
-              <div className="text-3xl font-bold text-blue-600">
-                {word.korean}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-500">영어:</span>
-                <span className="text-gray-800">{word.english}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-500">러시아어:</span>
-                <span className="text-gray-800">{word.russian}</span>
-              </div>
-              {word.pronunciation && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-500">발음:</span>
-                  <span className="text-gray-800">{word.pronunciation}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredWords.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
-          검색 결과가 없습니다.
+            <ArrowLeft className="w-5 h-5" />
+            뒤로 가기
+          </button>
+          <h2 className="text-2xl font-bold">단어 사전</h2>
         </div>
-      )}
-    </div>
+
+        {/* 검색 영역 */}
+        <div className="mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="한국어, 영어 또는 러시아어로 검색"
+              className="w-full pl-10 pr-4 py-2 border rounded-md"
+            />
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          </div>
+        </div>
+
+        {/* 단어 카드 그리드 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredWords.map((word) => (
+            <div 
+              key={word.korean}
+              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleWordClick(word)}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-3xl font-bold text-blue-600">
+                  {word.korean}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-500">영어:</span>
+                  <span className="text-gray-800">{word.english}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-500">러시아어:</span>
+                  <span className="text-gray-800">{word.russian}</span>
+                </div>
+                {word.pronunciation && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500">발음:</span>
+                    <span className="text-gray-800">{word.pronunciation}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filteredWords.length === 0 && (
+          <div className="text-center text-gray-500 py-8">
+            검색 결과가 없습니다.
+          </div>
+        )}
+      </div>
+    </PageLayout>
   )
 } 

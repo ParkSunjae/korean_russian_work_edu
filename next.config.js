@@ -3,13 +3,10 @@ const path = require("path");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
+  reactStrictMode: true,
   images: {
-    domains: ["localhost"],
-  },
-  compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
-  },
-};
+    domains: [],
+  }
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

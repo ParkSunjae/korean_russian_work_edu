@@ -1,14 +1,14 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/Input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
+import { Select } from '@/components/Select';
+import { Button } from '@/components/Button';
 import { Volume2 } from 'lucide-react';
-import { loadDictionaryData } from '@/utils/dictionary';
+import { koreanDictionary, type Word } from "@/utils/dictionary";
 
-interface DictionaryWord {
+interface DictionaryEntry {
   id: number;
   korean: string;
   english: string;
@@ -22,14 +22,14 @@ interface DictionaryWord {
   example_ru: string;
 }
 
-interface DictionaryData {
-  dictionary: DictionaryWord[];
+interface DictionaryState {
+  dictionary: DictionaryEntry[];
   categories: string[];
   difficulties: string[];
 }
 
 const KoreanDictionary = () => {
-  const [dictionary, setDictionary] = useState<DictionaryWord[]>([]);
+  const [dictionary, setDictionary] = useState<DictionaryEntry[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [difficulties, setDifficulties] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -38,20 +38,10 @@ const KoreanDictionary = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await loadDictionaryData();
-        setDictionary(data.dictionary);
-        setCategories(data.categories);
-        setDifficulties(data.difficulties);
-      } catch (error) {
-        console.error('Error loading dictionary:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
+    setDictionary(koreanDictionary);
+    setCategories(['all', ...Array.from(new Set(koreanDictionary.map(word => word.category)))]);
+    setDifficulties(['all', ...Array.from(new Set(koreanDictionary.map(word => word.difficulty)))]);
+    setIsLoading(false);
   }, []);
 
   // 발음 재생 함수
@@ -70,7 +60,7 @@ const KoreanDictionary = () => {
     }
   };
 
-  const playPronunciation = (word: DictionaryWord, language: 'ko' | 'en' | 'ru') => {
+  const playPronunciation = (word: DictionaryEntry, language: 'ko' | 'en' | 'ru') => {
     switch (language) {
       case 'ko':
         speakText(word.korean, 'ko-KR');
@@ -115,39 +105,31 @@ const KoreanDictionary = () => {
             />
             
             <div className="flex space-x-2 z-auto">
-              <Select 
+              <Select
+                label="카테고리"
+                options={[
+                  { value: 'all', label: '전체 카테고리' },
+                  ...categories.map(category => ({
+                    value: category,
+                    label: category
+                  }))
+                ]}
                 value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="카테고리" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 카테고리</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              />
 
-              <Select 
+              <Select
+                label="난이도"
+                options={[
+                  { value: 'all', label: '전체 난이도' },
+                  ...difficulties.map(difficulty => ({
+                    value: difficulty,
+                    label: difficulty
+                  }))
+                ]}
                 value={selectedDifficulty}
-                onValueChange={setSelectedDifficulty}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="난이도" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 난이도</SelectItem>
-                  {difficulties.map(difficulty => (
-                    <SelectItem key={difficulty} value={difficulty}>
-                      {difficulty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => setSelectedDifficulty(e.target.value)}
+              />
             </div>
           </div>
 
