@@ -1,88 +1,75 @@
 "use client";
 
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
-import { useRouter } from 'next/navigation';
-import { MENU_ITEMS } from '@/constants/menu';
-import type { MenuId } from '@/constants/menu';
+import React, { useState } from "react";
+import { Home, Type, Languages, BookOpen, MessageSquare, Gamepad, Bell, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-export function Navigation() {
-  const router = useRouter();
+const menuItems = [
+  { href: "/", label: "홈", labelRu: "Главная", icon: Home, id: "home" },
+  { href: "/consonants", label: "자음", labelRu: "Согласные", icon: Type, id: "consonants" },
+  { href: "/vowels", label: "모음", labelRu: "Гласные", icon: Languages, id: "vowels" },
+  { href: "/syllables", label: "자음+모음", labelRu: "Слоги", icon: BookOpen, id: "syllables" },
+  { href: "/batchims", label: "받침", labelRu: "Батчим", icon: BookOpen, id: "batchims" },
+  { href: "/words", label: "단어", labelRu: "Слова", icon: BookOpen, id: "words" },
+  { href: "/sentences", label: "문장", labelRu: "Предложения", icon: MessageSquare, id: "sentences" },
+  { href: "/games", label: "게임", labelRu: "Игры", icon: Gamepad, id: "games" },
+  { href: "/suggestions", label: "건의사항", labelRu: "Предложения", icon: Bell, id: "suggestions" },
+];
+
+const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
-  const handleMenuClick = async (menuId: MenuId, href: string) => {
+  const handleMenuClick = async (menuId: string, href: string) => {
     try {
-      const statsResponse = await fetch('/api/statistics');
-      const currentStats = await statsResponse.json();
-      const currentCount = currentStats.menuStats[menuId]?.count || 0;
-
-      await fetch('/api/statistics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/statistics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          type: 'menu',
-          data: { menuId, count: currentCount + 1 }
-        })
+          type: "menu",
+          data: menuId,
+        }),
       });
-
-      router.push(href);
-      setIsOpen(false); // 모바일에서 메뉴 클릭 시 닫기
     } catch (error) {
-      console.error('메뉴 통계 업데이트 실패:', error);
-      router.push(href);
+      console.error("메뉴 통계 업데이트 실패:", error);
     }
+
+    router.push(href);
+    setIsOpen(false); // 메뉴 클릭 시 닫기
   };
 
   return (
     <>
-      {/* 모바일 햄버거 버�� - 오른쪽으로 이동 */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 right-4 z-50 p-2 rounded-lg bg-white shadow-md md:hidden"
-      >
+      <button onClick={() => setIsOpen(!isOpen)} className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md md:hidden">
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* 오버레이 */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* 네비게이션 메뉴 */}
       <nav
-        className={`
-          fixed md:static inset-y-0 left-0 z-40
-          w-56 bg-white shadow-lg md:shadow-none
-          transform transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:translate-x-0
-          overflow-y-auto md:h-screen
-          border-r border-gray-200
-        `}
+        className={`fixed md:static inset-y-0 left-0 z-40 w-64 bg-white shadow-lg md:shadow-none transform transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 overflow-y-auto md:h-screen border-r border-gray-200`}
       >
-        <div className="p-4 space-y-1">
-          {MENU_ITEMS.map((item) => (
-            <button
-              key={item.href}
-              onClick={() => handleMenuClick(item.id, item.href)}
-              className="flex flex-col w-full px-4 py-3 rounded-lg
-                text-gray-700 hover:text-indigo-600 hover:bg-indigo-50
-                transition-all duration-200 text-left group"
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className="h-5 w-5 group-hover:text-indigo-600 transition-colors" />
-                <span className="font-medium">{item.label}</span>
-              </div>
-              <span className="text-sm text-gray-500 ml-8 mt-1 group-hover:text-indigo-400">
-                {item.labelRu}
-              </span>
-            </button>
+        <ul className="space-y-4 p-4">
+          {menuItems.map((item) => (
+            <li key={item.href}>
+              <button
+                onClick={() => handleMenuClick(item.id, item.href)}
+                className="flex flex-col items-start gap-1 py-2 px-4 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-200 transition-colors w-full text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </div>
+                <span className="text-sm text-gray-500">{item.labelRu}</span>
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       </nav>
     </>
   );
-}
+};
+
+export default Navigation;

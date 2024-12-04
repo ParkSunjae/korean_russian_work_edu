@@ -1,97 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import PageLayout from "@/components/PageLayout";
-import { BATCHIMS } from "@/data/batchims";
-import type { Batchim } from "@/data/batchims";
+import { Card, CardContent } from "@/components/Card";
 
-export default function BatchimsPage() {
-  const [selectedBatchim, setSelectedBatchim] = useState<Batchim>(BATCHIMS[0]);
+const BATCHIMS = [
+  { char: "ㄱ", sound: "기역", examples: ["각", "국", "박"] },
+  { char: "ㄴ", sound: "니은", examples: ["간", "신", "안"] },
+  { char: "ㄷ", sound: "디귿", examples: ["닫", "곧", "받"] },
+  { char: "ㄹ", sound: "리을", examples: ["갈", "밀", "살"] },
+  { char: "ㅁ", sound: "미음", examples: ["감", "밤", "삼"] },
+  { char: "ㅂ", sound: "비읍", examples: ["갑", "집", "숲"] },
+  { char: "ㅅ", sound: "시옷", examples: ["갓", "옷", "낫"] },
+  { char: "ㅇ", sound: "이응", examples: ["강", "공", "방"] },
+  { char: "ㅈ", sound: "지읒", examples: ["깎", "낚", "쫓"] },
+  { char: "ㅊ", sound: "치읓", examples: ["갛", "낳", "좋"] },
+  { char: "ㅋ", sound: "키읔", examples: ["깎", "넋", "닭"] },
+  { char: "ㅌ", sound: "티읕", examples: ["앉", "잊", "짖"] },
+  { char: "ㅍ", sound: "피읖", examples: ["앞", "잎", "숲"] },
+  { char: "ㅎ", sound: "히읗", examples: ["앟", "잃", "좋"] },
+];
+
+const BatchimsPage: React.FC = () => {
+  const playPronunciation = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "ko-KR";
+    speechSynthesis.speak(utterance);
+  };
 
   return (
     <PageLayout title="받침" titleRu="Батчим">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* 받침 설명 */}
           <div className="mb-8">
-            <p className="text-gray-700 mb-2">
-              받침은 한글 음절의 끝소리를 나타내는 자음입니다.
-            </p>
-            <p className="text-gray-600">
-              Батчим - это согласная буква в конце слога в корейском языке.
-            </p>
+            <p className="text-gray-700 mb-2">받침은 한글 음절의 끝소리를 나타내는 자음입니다.</p>
+            <p className="text-gray-600">Батчим - это согласная буква в конце слога в корейском языке.</p>
           </div>
 
-          {/* 받침 선택 버튼들 */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-medium mb-4">받침 선택 / Выберите батчим</h3>
-            <div className="flex flex-wrap gap-3">
-              {BATCHIMS.map((batchim) => (
-                <button
-                  key={batchim.char}
-                  onClick={() => setSelectedBatchim(batchim)}
-                  className={`px-6 py-3 rounded-lg text-xl font-medium transition-all
-                    ${selectedBatchim.char === batchim.char
-                      ? "bg-blue-500 text-white shadow-md transform scale-105"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                >
-                  {batchim.char}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 선택된 받침 상세 정보 */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            {/* 헤더 */}
-            <div className="bg-gray-50 p-6 border-b">
-              <div className="flex items-center gap-4">
-                <span className="text-4xl font-bold text-blue-600">
-                  {selectedBatchim.char}
-                </span>
-                <div>
-                  <h2 className="text-xl font-semibold">발음 / Произношение</h2>
-                  <p className="text-lg text-gray-600">{selectedBatchim.sound}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* 본문 */}
-            <div className="p-6">
-              {/* 설명 */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-3">설명 / Объяснение</h3>
-                <div className="space-y-2">
-                  <p className="text-gray-700">{selectedBatchim.description}</p>
-                  <p className="text-gray-600">{selectedBatchim.description_ru}</p>
-                </div>
-              </div>
-
-              {/* 예시 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3">예시 / Примеры</h3>
-                <div className="grid gap-3">
-                  {selectedBatchim.examples.map((example, index) => (
-                    <div 
-                      key={index}
-                      className="bg-gray-50 p-4 rounded-lg flex justify-between items-center hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="space-y-1">
-                        <span className="text-xl font-medium">{example.word}</span>
-                        <div className="text-sm text-gray-500">
-                          {example.pronunciation}
-                        </div>
-                      </div>
-                      <span className="text-gray-600 text-lg">{example.meaning}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {BATCHIMS.map((batchim) => (
+              <Card key={batchim.char} className="bg-white shadow-md rounded-lg">
+                <CardContent>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-4xl font-bold text-blue-600">{batchim.char}</span>
+                    <span className="text-lg text-gray-600">{batchim.sound}</span>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">예시 / Примеры</h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {batchim.examples.map((example, index) => (
+                      <li key={index} className="text-gray-700 flex items-center gap-2">
+                        {example}
+                        <button onClick={() => playPronunciation(example)} className="text-blue-500 hover:text-blue-700">
+                          🔊
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
     </PageLayout>
   );
-}
+};
+
+export default BatchimsPage;

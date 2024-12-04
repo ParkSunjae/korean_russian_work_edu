@@ -6,8 +6,8 @@ export interface WordType {
   pronunciation: string;
 }
 
-export const WORDS: WordType[] = koreanDictionary.map(word => ({
+export const WORDS: WordType[] = koreanDictionary.map((word) => ({
   korean: word.korean,
   russian: word.russian,
-  pronunciation: word.pronunciation
-})); 
+  pronunciation: word.pronunciation,
+}));
