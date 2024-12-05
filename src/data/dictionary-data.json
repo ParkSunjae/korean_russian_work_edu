@@ -151,9 +151,24 @@
       "pronunciation": "chaek"
     },
     {
+      "korean": "키보드",
+      "russian": "клавиатура",
+      "pronunciation": "kibodeu"
+    },
+    {
       "korean": "공책",
       "russian": "блокнот",
-      "pronunciation": ""
+      "pronunciation": "gongchaek"
+    },
+    {
+      "korean": "연필",
+      "russian": "карандаш",
+      "pronunciation": "yeonpil"
+    },
+    {
+      "korean": "마우스",
+      "russian": "мышь",
+      "pronunciation": "mauseu"
     }
   ]
 }

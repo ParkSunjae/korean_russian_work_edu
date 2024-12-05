@@ -10,6 +10,179 @@ interface WordType {
   pronunciation: string;
 }
 
+// 한글 자음과 모음 매핑
+const KOREAN_CHARS = {
+  CONSONANTS: ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"],
+  VOWELS: ["ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅙ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅞ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"],
+  FINAL_CONSONANTS: [
+    "",
+    "ㄱ",
+    "ㄲ",
+    "ㄳ",
+    "ㄴ",
+    "ㄵ",
+    "ㄶ",
+    "ㄷ",
+    "ㄹ",
+    "ㄺ",
+    "ㄻ",
+    "ㄼ",
+    "ㄽ",
+    "ㄾ",
+    "ㄿ",
+    "ㅀ",
+    "ㅁ",
+    "ㅂ",
+    "ㅄ",
+    "ㅅ",
+    "ㅆ",
+    "ㅇ",
+    "ㅈ",
+    "ㅊ",
+    "ㅋ",
+    "ㅌ",
+    "ㅍ",
+    "ㅎ",
+  ],
+};
+
+type KoreanChar = "ㄱ" | "ㄲ" | "ㄴ" | "ㄷ" | "ㄸ" | "ㄹ" | "ㅁ" | "ㅂ" | "ㅃ" | "ㅅ" | "ㅆ" | "ㅇ" | "ㅈ" | "ㅉ" | "ㅊ" | "ㅋ" | "ㅌ" | "ㅍ" | "ㅎ";
+type KoreanVowel =
+  | "ㅏ"
+  | "ㅐ"
+  | "ㅑ"
+  | "ㅒ"
+  | "ㅓ"
+  | "ㅔ"
+  | "ㅕ"
+  | "ㅖ"
+  | "ㅗ"
+  | "ㅘ"
+  | "ㅙ"
+  | "ㅚ"
+  | "ㅛ"
+  | "ㅜ"
+  | "ㅝ"
+  | "ㅞ"
+  | "ㅟ"
+  | "ㅠ"
+  | "ㅡ"
+  | "ㅢ"
+  | "ㅣ";
+type KoreanFinal =
+  | ""
+  | "ㄱ"
+  | "ㄲ"
+  | "ㄳ"
+  | "ㄴ"
+  | "ㄵ"
+  | "ㄶ"
+  | "ㄷ"
+  | "ㄹ"
+  | "ㄺ"
+  | "ㄻ"
+  | "ㄼ"
+  | "ㄽ"
+  | "ㄾ"
+  | "ㄿ"
+  | "ㅀ"
+  | "ㅁ"
+  | "ㅂ"
+  | "ㅄ"
+  | "ㅅ"
+  | "ㅆ"
+  | "ㅇ"
+  | "ㅈ"
+  | "ㅊ"
+  | "ㅋ"
+  | "ㅌ"
+  | "ㅍ"
+  | "ㅎ";
+
+const ROMANIZATION: {
+  CONSONANTS: Record<KoreanChar, string>;
+  VOWELS: Record<KoreanVowel, string>;
+  FINAL_CONSONANTS: Record<KoreanFinal, string>;
+} = {
+  // 초성
+  CONSONANTS: {
+    ㄱ: "g",
+    ㄲ: "kk",
+    ㄴ: "n",
+    ㄷ: "d",
+    ㄸ: "tt",
+    ㄹ: "r",
+    ㅁ: "m",
+    ㅂ: "b",
+    ㅃ: "pp",
+    ㅅ: "s",
+    ㅆ: "ss",
+    ㅇ: "",
+    ㅈ: "j",
+    ㅉ: "jj",
+    ㅊ: "ch",
+    ㅋ: "k",
+    ㅌ: "t",
+    ㅍ: "p",
+    ㅎ: "h",
+  },
+  // 중성
+  VOWELS: {
+    ㅏ: "a",
+    ㅐ: "ae",
+    ㅑ: "ya",
+    ㅒ: "yae",
+    ㅓ: "eo",
+    ㅔ: "e",
+    ㅕ: "yeo",
+    ㅖ: "ye",
+    ㅗ: "o",
+    ㅘ: "wa",
+    ㅙ: "wae",
+    ㅚ: "oe",
+    ㅛ: "yo",
+    ㅜ: "u",
+    ㅝ: "wo",
+    ㅞ: "we",
+    ㅟ: "wi",
+    ㅠ: "yu",
+    ㅡ: "eu",
+    ㅢ: "ui",
+    ㅣ: "i",
+  },
+  // 종성
+  FINAL_CONSONANTS: {
+    "": "",
+    ㄱ: "k",
+    ㄲ: "k",
+    ㄳ: "k",
+    ㄴ: "n",
+    ㄵ: "n",
+    ㄶ: "n",
+    ㄷ: "t",
+    ㄹ: "l",
+    ㄺ: "k",
+    ㄻ: "m",
+    ㄼ: "l",
+    ㄽ: "l",
+    ㄾ: "l",
+    ㄿ: "p",
+    ㅀ: "l",
+    ㅁ: "m",
+    ㅂ: "p",
+    ㅄ: "p",
+    ㅅ: "t",
+    ㅆ: "t",
+    ㅇ: "ng",
+    ㅈ: "t",
+    ㅊ: "t",
+    ㅋ: "k",
+    ㅌ: "t",
+    ㅍ: "p",
+    ㅎ: "t",
+  },
+};
+
 export default function WordsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,6 +207,40 @@ export default function WordsPage() {
     loadDictionary();
   }, []);
 
+  function koreanToEnglish(text: string): string {
+    const result: string[] = [];
+
+    for (const char of text) {
+      // 한글이 아닌 경우 그대로 추가
+      if (!/[가-힣]/.test(char)) {
+        result.push(char);
+        continue;
+      }
+
+      // 한글 유니코드 분해
+      const charCode = char.charCodeAt(0) - 0xac00;
+
+      // 초성, 중성, 종성 인덱스 계산
+      const initialIndex = Math.floor(charCode / (21 * 28));
+      const vowelIndex = Math.floor((charCode % (21 * 28)) / 28);
+      const finalIndex = charCode % 28;
+
+      // 각 자소를 가져옴
+      const initial = KOREAN_CHARS.CONSONANTS[initialIndex];
+      const vowel = KOREAN_CHARS.VOWELS[vowelIndex];
+      const final = KOREAN_CHARS.FINAL_CONSONANTS[finalIndex];
+
+      // 영문으로 변환
+      const initialRoman = ROMANIZATION.CONSONANTS[initial as KoreanChar] || "";
+      const vowelRoman = ROMANIZATION.VOWELS[vowel as KoreanVowel] || "";
+      const finalRoman = final ? ROMANIZATION.FINAL_CONSONANTS[final as KoreanFinal] || "" : "";
+
+      result.push(initialRoman + vowelRoman + finalRoman);
+    }
+
+    return result.join("");
+  }
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
@@ -50,17 +257,8 @@ export default function WordsPage() {
       setSearchResult(existingWord);
     } else {
       try {
-        // 1. 한글->영문 발음 생성
-        const koreanToEngResponse = await fetch("/api/translate/korean-to-eng", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ korean: searchTerm }),
-        });
-
-        const engData = await koreanToEngResponse.json();
-        console.log("영문 발음 데이터:", engData);
-
-        // 2. 러시아어 번역 가져오기
+        console.log("searchTerm", searchTerm);
+        // 1. 러시아어 번역 가져오기
         const response = await fetch("/api/translate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -69,12 +267,15 @@ export default function WordsPage() {
 
         const data = await response.json();
         console.log("러시아어 번역 데이터:", data);
+        // pronunciation이 비어있는 경우 한글->영문 변환 수행
 
+        const pronunciation = koreanToEnglish(searchTerm);
+        console.log("pronunciation", pronunciation);
         // 3. 검색 결과 설정
         const newWord = {
           korean: searchTerm,
           russian: data.russian || "",
-          pronunciation: engData.pronunciation || data.pronunciation || "", // 발음 우선순위 설정
+          pronunciation: pronunciation,
         };
 
         console.log("최종 생성된 단어 데이터:", newWord);
@@ -90,18 +291,6 @@ export default function WordsPage() {
     if (searchResult) {
       try {
         let wordToSave = { ...searchResult };
-
-        // pronunciation이 비어있는 경우 한글->영문 변환 수행
-        if (!wordToSave.pronunciation) {
-          const koreanToEngResponse = await fetch("/api/translate/korean-to-eng", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ korean: wordToSave.korean }),
-          });
-
-          const engData = await koreanToEngResponse.json();
-          wordToSave.pronunciation = engData.pronunciation;
-        }
 
         console.log("저장할 단어 데이터:", wordToSave);
 
