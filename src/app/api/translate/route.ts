@@ -3,11 +3,24 @@ import { headers } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
-    const { korean } = await request.json();
-    const requestHeaders = request.headers;
-    const host = requestHeaders.get('host') || 'localhost:3000';
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const referer = `${protocol}://${host}`;
+    // 요청 본문이 비어있는지 확인
+    if (!request.body) {
+      return NextResponse.json({
+        success: false,
+        error: "Request body is empty"
+      }, { status: 400 });
+    }
+
+    let korean;
+    try {
+      const body = await request.json();
+      korean = body.korean;
+    } catch (e) {
+      return NextResponse.json({
+        success: false,
+        error: "Invalid JSON in request body"
+      }, { status: 400 });
+    }
 
     if (!korean) {
       return NextResponse.json({
@@ -24,46 +37,62 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    // Google Translate API 호출
-    const response = await fetch(
-      `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Referer": referer,
-          "Origin": referer
-        },
-        body: JSON.stringify({
-          q: korean,
-          source: "ko",
-          target: "ru",
-          format: "text"
-        }),
+    try {
+      // Google Translate API 호출
+      const response = await fetch(
+        `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            q: korean,
+            source: "ko",
+            target: "ru",
+            format: "text"
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Translation API error response:', errorText);
+        return NextResponse.json({
+          success: false,
+          error: "Translation API error",
+          details: errorText
+        }, { status: response.status });
       }
-    );
 
-    const data = await response.json();
+      const data = await response.json();
+      
+      if (!data?.data?.translations?.[0]?.translatedText) {
+        return NextResponse.json({
+          success: false,
+          error: "Invalid translation response format"
+        }, { status: 500 });
+      }
 
-    if (!response.ok) {
-      console.error("Translation API error:", data);
+      return NextResponse.json({
+        success: true,
+        russian: data.data.translations[0].translatedText
+      });
+
+    } catch (error) {
+      console.error('Translation API call error:', error);
       return NextResponse.json({
         success: false,
-        error: "Translation failed",
-        details: data.error?.message || "Unknown error"
-      }, { status: response.status });
+        error: "Translation service error",
+        details: error instanceof Error ? error.message : "Unknown error"
+      }, { status: 500 });
     }
 
-    return NextResponse.json({
-      success: true,
-      russian: data.data.translations[0].translatedText
-    });
-
   } catch (error) {
-    console.error("Translation error:", error);
+    console.error('General error:', error);
     return NextResponse.json({
       success: false,
-      error: "Translation service error",
+      error: "Server error",
       details: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 });
   }

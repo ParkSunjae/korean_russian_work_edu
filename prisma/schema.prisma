@@ -20,15 +20,15 @@ model Dictionary {
   korean        String   @unique
   english       String?
   russian       String
-  pronunciation String
+  pronunciation String?
   definition    String?
   definition_ru String?
-  category      String   @default("기본")
-  difficulty    String   @default("초급")
+  category      String?
+  difficulty    String?
   examples      Example[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  stats         WordStats?
+  stats         WordStats[]
 }
 
 // 통계

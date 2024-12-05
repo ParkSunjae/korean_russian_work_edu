@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
 
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  details?: string;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -60,37 +67,36 @@ export async function POST(request: Request) {
     
     // 필수 필드 검증
     if (!wordData?.korean || !wordData?.russian) {
-      return NextResponse.json({ 
+      return NextResponse.json<ApiResponse<null>>({ 
         success: false, 
         error: 'Missing required fields: korean and russian are required' 
       }, { status: 400 });
     }
 
-    // 중복 검사 - 대소문자 구분 없이, 공백 제거 후 비교
-    const normalizedKorean = wordData.korean.trim().toLowerCase();
+    // 중복 검사
     const existingWord = await prisma.dictionary.findFirst({
       where: {
         korean: {
-          equals: normalizedKorean,
-          mode: 'insensitive'  // 대소문자 구분 없이
+          equals: wordData.korean.trim(),
+          mode: 'insensitive'
         }
       }
     });
 
     if (existingWord) {
-      return NextResponse.json({
+      return NextResponse.json<ApiResponse<typeof existingWord>>({
         success: false,
         error: 'Word already exists',
-        existingWord
+        data: existingWord
       }, { status: 409 });
     }
 
     // 새 단어 생성
     const word = await prisma.dictionary.create({
       data: {
-        korean: normalizedKorean,  // 정규화된 한국어 저장
-        english: wordData.english?.trim() || "",
+        korean: wordData.korean.trim(),
         russian: wordData.russian.trim(),
+        english: wordData.english?.trim() || "",
         pronunciation: wordData.pronunciation?.trim() || "",
         definition: wordData.definition?.trim() || "",
         definition_ru: wordData.definition_ru?.trim() || "",
@@ -107,14 +113,14 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json({
+    return NextResponse.json<ApiResponse<typeof word>>({
       success: true,
       data: word
     }, { status: 201 });
 
   } catch (error) {
     console.error('Dictionary creation error:', error);
-    return NextResponse.json({
+    return NextResponse.json<ApiResponse<null>>({
       success: false,
       error: 'Failed to create dictionary entry',
       details: error instanceof Error ? error.message : 'Unknown error'

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { MenuId } from "@/constants/menu";
+import { cookies } from 'next/headers';
 
 export async function GET() {
   try {
@@ -51,92 +52,45 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    console.log('Received request body:', body);
+    const cookieStore = await cookies();
+    const visitId = cookieStore.get('visit_id')?.value;
 
-    if (!body || !body.type || !body.data) {
-      console.error('Invalid request body:', body);
-      return NextResponse.json(
-        { error: 'Invalid request body', received: body },
-        { status: 400 }
-      );
+    // 이미 방문 기록이 있으면 카운트하지 않음
+    if (visitId) {
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Already counted' 
+      });
     }
 
-    const { type, data } = body;
+    // 기존 통계 가져오기
+    let stats = await prisma.statistics.findFirst();
 
-    switch (type) {
-      case 'menu': {
-        const menuId = data.id;
-        const { name, nameRu } = data;
-        
-        if (!menuId || !name || !nameRu) {
-          console.error('Missing menu data:', data);
-          return NextResponse.json(
-            { error: 'Missing required menu data', received: data },
-            { status: 400 }
-          );
-        }
-
-        // 메뉴 통계 업데이트
-        const result = await prisma.menuStats.upsert({
-          where: { menuId },
-          update: {
-            count: { increment: 1 },
-            lastClicked: new Date()
-          },
-          create: {
-            menuId,
-            name,
-            nameRu,
-            count: 1,
-            lastClicked: new Date()
-          }
-        });
-
-        return NextResponse.json({ success: true, data: result });
-      }
-
-      case 'word': {
-        const { korean, russian, pronunciation } = data;
-        if (!korean || !russian || !pronunciation) {
-          console.error('Missing word data:', data);
-          return NextResponse.json(
-            { error: 'Missing required word data', received: data },
-            { status: 400 }
-          );
-        }
-
-        // 단어 통계 업데이트
-        const result = await prisma.wordStats.upsert({
-          where: { korean },
-          update: {
-            count: { increment: 1 },
-            lastUsed: new Date()
-          },
-          create: {
-            korean,
-            russian,
-            pronunciation,
-            count: 1,
-            lastUsed: new Date()
-          }
-        });
-
-        return NextResponse.json({ success: true, data: result });
-      }
-
-      default:
-        console.error('Invalid statistics type:', type);
-        return NextResponse.json(
-          { error: 'Invalid statistics type', received: { type, data } },
-          { status: 400 }
-        );
+    if (!stats) {
+      stats = await prisma.statistics.create({
+        data: { totalVisits: 1 }
+      });
+    } else {
+      stats = await prisma.statistics.update({
+        where: { id: stats.id },
+        data: { totalVisits: stats.totalVisits + 1 }
+      });
     }
+
+    const response = NextResponse.json({ success: true, data: stats });
+    response.cookies.set('visit_id', '1', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 // 24시간
+    });
+
+    return response;
   } catch (error) {
     console.error('Failed to update statistics:', error);
-    return NextResponse.json(
-      { error: 'Failed to update statistics', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Failed to update statistics' 
+    }, { status: 500 });
   }
 }

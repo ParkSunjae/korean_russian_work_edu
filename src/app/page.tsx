@@ -3,29 +3,38 @@
 import { useState, useEffect } from "react";
 import { Notice } from "@/types/notice";
 import { Statistics } from "@/types/statistics";
-import React from "react";
 
 export default function Home() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [stats, setStats] = useState<Statistics | null>(null);
 
   useEffect(() => {
-    fetch("/api/notices")
-      .then((res) => res.json())
-      .then((data: Notice[]) => {
-        const latestNotices = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
-        setNotices(latestNotices);
-      })
-      .catch((error) => console.error("Error fetching notices:", error));
+    const initializePage = async () => {
+      try {
+        // 방문자 수 업데이트
+        await fetch('/api/statistics', {
+          method: 'POST',
+          credentials: 'include'
+        });
 
-    // Load statistics data
-    fetch("/api/statistics")
-      .then((res) => res.json())
-      .then((data: Statistics) => {
-        console.log("통계 데이터:", data); // 데이터 확인용 로그
-        setStats(data);
-      })
-      .catch((error) => console.error("Error fetching statistics:", error));
+        // 공지사항 로드
+        const noticesRes = await fetch("/api/notices");
+        const noticesData: Notice[] = await noticesRes.json();
+        const latestNotices = noticesData
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 3);
+        setNotices(latestNotices);
+
+        // 통계 데이터 로드
+        const statsRes = await fetch("/api/statistics");
+        const statsData: Statistics = await statsRes.json();
+        setStats(statsData);
+      } catch (error) {
+        console.error("Error initializing page:", error);
+      }
+    };
+
+    initializePage();
   }, []);
 
   return (
