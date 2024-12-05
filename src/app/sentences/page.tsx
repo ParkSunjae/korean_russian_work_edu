@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Volume2, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import PageLayout from "@/components/PageLayout";
 
 const sentences = [
@@ -337,69 +339,115 @@ const sentences = [
 ] as const;
 
 // 카테고리 타입 정의
-const CATEGORIES = ["all", "인사", "식사", "안부", "축하", "응원", "질문", "예의", "응답", "초대"] as const;
-type Category = (typeof CATEGORIES)[number];
+interface Sentence {
+  id: string;
+  korean: string;
+  russian: string;
+  romanization: string;
+  level: string;
+  category: string;
+  definition: string;
+  definition_ru: string;
+}
+
+type Category = "all" | string;
 
 export default function SentencesPage() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<Category>("all");
 
-  // 실제 카테고리 목록 생성 (sentences 데이터의 카테고리 포함)
-  const categories = Array.from(new Set(["all", ...sentences.map(s => s.category)]));
+  const categories = Array.from(new Set(["all", ...sentences.map((s) => s.category)]));
+  const filteredSentences = selectedCategory === "all" ? sentences : sentences.filter((s) => s.category === selectedCategory);
 
-  const filteredSentences = selectedCategory === "all" 
-    ? sentences 
-    : sentences.filter((s) => s.category === selectedCategory);
+  const playPronunciation = (text: string, language: "ko" | "ru") => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = language === "ko" ? "ko-KR" : "ru-RU";
+    speechSynthesis.speak(utterance);
+  };
 
   return (
-    <PageLayout title="문장" titleRu="Предложения">
-      <div className="space-y-6">
-        <div className="flex gap-2 flex-wrap">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category as Category)}
-              className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                selectedCategory === category 
-                  ? "bg-blue-500 text-white" 
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {category === "all" ? "전체" : category}
-            </button>
-          ))}
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="max-w-[1400px] mx-auto px-4">
+        {/* 헤더 섹션 */}
+        <div className="mb-6">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors duration-200">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">뒤로 가기</span>
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">문장</h1>
+          <p className="mt-2 text-gray-600">카테고리별 한국어 문장을 학습하세요.</p>
+          <p className="mt-1 text-gray-500">Изучайте корейские предложения по категориям.</p>
         </div>
 
+        {/* 카테고리 필터 */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category as Category)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  selectedCategory === category ? "bg-indigo-600 text-white shadow-sm" : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                }`}
+              >
+                {category === "all" ? "전체 / Все" : category}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 문장 그리드 */}
         <div className="grid gap-4">
           {filteredSentences.map((sentence) => (
-            <div key={sentence.id} className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-medium">{sentence.korean}</h3>
-                  <p className="text-gray-600">{sentence.russian}</p>
-                  <p className="text-sm text-gray-500">{sentence.romanization}</p>
+            <div key={sentence.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
+              <div className="p-4">
+                {/* 문장 헤더 */}
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex-grow space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-medium text-gray-900">{sentence.korean}</h2>
+                      <button
+                        onClick={() => playPronunciation(sentence.korean, "ko")}
+                        className="p-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                      >
+                        <Volume2 className="w-4 h-4 text-indigo-600" />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-gray-600">{sentence.russian}</p>
+                      <button
+                        onClick={() => playPronunciation(sentence.russian, "ru")}
+                        className="p-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                      >
+                        <Volume2 className="w-4 h-4 text-indigo-600" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-500">{sentence.romanization}</p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-lg">{sentence.level}</span>
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg">{sentence.category}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded">{sentence.level}</span>
-                  <span className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded">{sentence.category}</span>
-                </div>
-              </div>
-              
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">설명: </span>
-                    {sentence.definition}
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">Описание: </span>
-                    {sentence.definition_ru}
-                  </p>
+
+                {/* 설명 섹션 */}
+                <div className="pt-4 border-t border-gray-100">
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">설명: </span>
+                      {sentence.definition}
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Описание: </span>
+                      {sentence.definition_ru}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </div>
-    </PageLayout>
+    </div>
   );
 }

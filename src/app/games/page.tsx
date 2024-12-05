@@ -1,14 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Card, CardContent } from "@/components/Card";
-import { Button } from "@/components/Button";
-import { Input } from "@/components/Input";
-import { Alert, AlertDescription } from "@/components/Alert";
-import { Mic, MicOff } from "lucide-react";
+import { Mic, MicOff, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { WORDS } from "@/constants/words";
 import type { WordType } from "@/constants/words";
-import PageLayout from "@/components/PageLayout";
 
 interface Word extends WordType {
   x: number;
@@ -22,11 +18,11 @@ interface MatchedWordCount extends Word {
   totalScore: number;
 }
 
-const FallingWordsGame = () => {
+export default function FallingWordsGame() {
+  const router = useRouter();
   const [gameState, setGameState] = useState<"ready" | "playing" | "ended">("ready");
   const [score, setScore] = useState<number>(0);
   const [lives, setLives] = useState<number>(10);
-  const [userInput, setUserInput] = useState<string>("");
   const [fallingWords, setFallingWords] = useState<Word[]>([]);
   const [matchedWords, setMatchedWords] = useState<MatchedWordCount[]>([]);
   const [speed, setSpeed] = useState<number>(2000);
@@ -37,7 +33,7 @@ const FallingWordsGame = () => {
   const [transcript, setTranscript] = useState<string>("");
 
   const recognition = useRef<any>(null);
-
+  // Speech Recognition 설정
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -48,7 +44,6 @@ const FallingWordsGame = () => {
 
         recognition.current.onresult = (event: any) => {
           const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-          console.log("Raw transcript:", transcript);
           setTranscript(transcript);
           handleVoiceInput(transcript);
         };
@@ -62,10 +57,56 @@ const FallingWordsGame = () => {
     }
   }, [displayMode, gameState]);
 
+  // 게임 시작 함수
+  const startGame = () => {
+    setGameState("playing");
+    setScore(0);
+    setFallingWords([]); // 기존 단어들 초기화
+    setMatchedWords([]);
+
+    // 난이도에 따른 초기 설정
+    const difficultySettings: { [key: number]: { lives: number; speed: number } } = {
+      1: { lives: 10, speed: 2000 },
+      2: { lives: 7, speed: 1500 },
+      3: { lives: 5, speed: 1000 },
+    };
+
+    setLives(difficultySettings[selectedLevel].lives);
+    setSpeed(difficultySettings[selectedLevel].speed);
+    setLevel(1);
+
+    // 음성 인식 시작
+    if (recognition.current) {
+      recognition.current.continuous = true;
+      recognition.current.start();
+      setIsListening(true);
+    }
+  };
+
+  // 게임 종료 함수
+  const endGame = () => {
+    setGameState("ended");
+    if (recognition.current) {
+      recognition.current.stop();
+      setIsListening(false);
+    }
+  };
+
+  const generateWord = useCallback(() => {
+    const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+    const randomX = Math.random() * 80 + 10; // 화면 가로 범위 내에서 랜덤 위치
+    return {
+      ...randomWord,
+      x: randomX,
+      y: 0,
+      id: Date.now(),
+      matched: false,
+    };
+  }, []);
+
+  // 음성 입력 처리 함수
   const handleVoiceInput = (input: string) => {
     if (!input) return;
-
-    console.log("Voice input received:", input);
 
     setFallingWords((prev) => {
       const newWords = [...prev];
@@ -78,137 +119,48 @@ const FallingWordsGame = () => {
         const matchedWord = newWords[matchIndex];
         newWords[matchIndex] = { ...matchedWord, matched: true };
 
+        // 점수 계산
+        const points = calculatePoints(matchedWord.y);
+
         setMatchedWords((prev) => {
           const existingWordIndex = prev.findIndex((w) => w.korean === matchedWord.korean && w.russian === matchedWord.russian);
 
           if (existingWordIndex !== -1) {
-            const newMatchedWords = [...prev];
-            newMatchedWords[existingWordIndex] = {
-              ...newMatchedWords[existingWordIndex],
-              count: newMatchedWords[existingWordIndex].count + 1,
-              totalScore: newMatchedWords[existingWordIndex].totalScore + 20,
+            const updatedWords = [...prev];
+            const existingWord = updatedWords[existingWordIndex];
+            updatedWords[existingWordIndex] = {
+              ...existingWord,
+              count: existingWord.count + 1,
+              totalScore: existingWord.totalScore + points,
             };
-            return newMatchedWords;
+            return updatedWords;
           }
-          return [...prev, { ...matchedWord, count: 1, totalScore: 20 }];
+
+          return [
+            ...prev,
+            {
+              ...matchedWord,
+              count: 1,
+              totalScore: points,
+              id: matchedWord.id,
+              x: matchedWord.x,
+              y: matchedWord.y,
+            },
+          ];
         });
 
-        setScore((s) => s + 20);
+        setScore((prev) => prev + points);
 
         setTimeout(() => {
           setFallingWords((words) => words.filter((w) => w.id !== matchedWord.id));
         }, 200);
       }
+
       return newWords;
     });
   };
 
-  const generateWord = useCallback(() => {
-    const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
-    let randomX: number = Math.random() * 80 + 10;
-
-    const occupiedAreas = fallingWords.map((word) => ({
-      start: word.x - 15,
-      end: word.x + 15,
-    }));
-
-    let attempts = 0;
-    while (occupiedAreas.some((area) => randomX >= area.start && randomX <= area.end) && attempts < 20) {
-      randomX = Math.random() * 80 + 10;
-      attempts++;
-    }
-
-    if (attempts >= 20) {
-      return null;
-    }
-
-    return {
-      ...randomWord,
-      x: randomX,
-      y: 0,
-      id: Date.now(),
-    };
-  }, []);
-
-  useEffect(() => {
-    let gameLoop: NodeJS.Timeout;
-    let wordGenerator: NodeJS.Timeout;
-
-    if (gameState === "playing") {
-      const generationInterval = Math.max(3000 - level * 200, 1000);
-
-      wordGenerator = setInterval(() => {
-        setFallingWords((prev) => {
-          const newWord = generateWord();
-          if (!newWord) return prev;
-
-          const isOverlapping = prev.some((word) => Math.abs(word.x - newWord.x) < 30);
-
-          return isOverlapping ? prev : [...prev, newWord];
-        });
-      }, generationInterval);
-
-      gameLoop = setInterval(() => {
-        setFallingWords((prev) => {
-          return prev
-            .map((word) => ({
-              ...word,
-              y: word.y + 1,
-            }))
-            .filter((word) => {
-              if (word.y >= 90) {
-                setLives((lives) => lives - 1);
-                return false;
-              }
-              return true;
-            });
-        });
-      }, speed);
-    }
-
-    return () => {
-      clearInterval(gameLoop);
-      clearInterval(wordGenerator);
-    };
-  }, [gameState, speed, level, generateWord]);
-
-  useEffect(() => {
-    if (lives <= 0) {
-      setGameState("ended");
-    }
-  }, [lives]);
-
-  useEffect(() => {
-    const newLevel = Math.floor(score / 20) + 1;
-    if (newLevel !== level) {
-      setLevel(newLevel);
-      setSpeed((prev) => Math.max(prev * 0.9, 500));
-    }
-  }, [score, level]);
-
-  const startGame = () => {
-    setGameState("playing");
-    setScore(0);
-    setLives(selectedLevel === 1 ? 10 : selectedLevel === 2 ? 7 : 5);
-    setFallingWords([]);
-    setMatchedWords([]);
-    setSpeed(selectedLevel === 1 ? 2000 : selectedLevel === 2 ? 1500 : 1000);
-    setLevel(1);
-    if (recognition.current) {
-      recognition.current.continuous = true;
-      recognition.current.start();
-      setIsListening(true);
-    }
-  };
-
-  const endGame = () => {
-    setGameState("ended");
-    if (recognition.current) {
-      recognition.current.stop();
-      setIsListening(false);
-    }
-  };
-
+  // 답변 확인 함수
   const checkAnswer = (input: string, word: Word) => {
     const normalizedInput = input.toLowerCase().trim();
     const normalizedKorean = word.korean.toLowerCase().trim();
@@ -227,28 +179,68 @@ const FallingWordsGame = () => {
     );
   };
 
-  const handleInput = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const input = userInput.trim();
-    if (!input) return;
-
-    const matchedWordIndex = fallingWords.findIndex((word) => checkAnswer(input, word));
-
-    if (matchedWordIndex !== -1) {
-      const matchedWord = fallingWords[matchedWordIndex];
-      setMatchedWords((prev) => [...prev, { ...matchedWord, count: 1, totalScore: 20 }]);
-      setScore((prev) => prev + 20);
-
-      setFallingWords((prev) => prev.filter((_, index) => index !== matchedWordIndex));
-
-      if ((score + 20) % 100 === 0) {
-        setLives((prev) => prev + 1);
-      }
-    }
-
-    setUserInput("");
+  // 점수 계산 함수
+  const calculatePoints = (yPosition: number): number => {
+    if (yPosition < 30) return 30;
+    if (yPosition < 60) return 20;
+    return 10;
   };
 
+  // 게임 루프 최적화
+  useEffect(() => {
+    let gameLoop: NodeJS.Timeout;
+    let wordGenerator: NodeJS.Timeout;
+
+    if (gameState === "playing") {
+      // 단어 생성 주기
+      wordGenerator = setInterval(() => {
+        setFallingWords((prev) => {
+          if (prev.length >= 8) return prev;
+          const newWord = generateWord();
+          return [...prev, newWord];
+        });
+      }, 2000);
+
+      // 단어 낙하 주기
+      gameLoop = setInterval(() => {
+        setFallingWords((prev) =>
+          prev
+            .map((word) => ({
+              ...word,
+              y: word.y + 0.5, // 낙하 속도 조정
+            }))
+            .filter((word) => {
+              if (word.y >= 90 && !word.matched) {
+                setLives((lives) => lives - 1);
+                return false;
+              }
+              return word.y < 100;
+            })
+        );
+      }, 16); // 60fps에 가까운 부드러운 애니메이션을 위해 16ms 간격 사용
+    }
+
+    return () => {
+      clearInterval(gameLoop);
+      clearInterval(wordGenerator);
+    };
+  }, [gameState, generateWord]);
+
+  // 목숨 감시
+  useEffect(() => {
+    if (lives <= 0) {
+      endGame();
+    }
+  }, [lives]);
+
+  // 레벨 업데이트
+  useEffect(() => {
+    const newLevel = Math.floor(score / 100) + 1;
+    if (newLevel !== level) {
+      setLevel(newLevel);
+      setSpeed((prev) => Math.max(prev * 0.9, 500));
+    }
+  }, [score, level]);
   const toggleDisplayMode = () => {
     setDisplayMode((current) => {
       switch (current) {
@@ -275,136 +267,159 @@ const FallingWordsGame = () => {
     }
   };
 
-  const VoiceStatus = ({ isListening }: { isListening: boolean }) => (
-    <div className="flex items-center gap-2 text-sm">
-      {isListening ? (
-        <>
-          <Mic className="w-4 h-4 text-green-500 animate-pulse" />
-          <span className="text-green-600">음성 인식 활성화 / Голосовой ввод активен</span>
-        </>
-      ) : (
-        <>
-          <MicOff className="w-4 h-4 text-red-500" />
-          <span className="text-red-600">음성 인식 비활성화 / Голосовой ввод отключен</span>
-        </>
-      )}
-    </div>
-  );
-
   return (
-    <div className="p-2 sm:p-4 bg-gray-50 min-h-screen">
-      <Card className="w-full max-w-4xl mx-auto bg-white">
-        <CardContent className="p-3 sm:p-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-center mb-4">
-            내려오는 단어를 말해서 맞추기
-            <span className="block text-lg sm:text-xl text-gray-600 mt-1">Произнесите падающие слова</span>
-          </h1>
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="max-w-[1400px] mx-auto px-4">
+        {/* 헤더 섹션 */}
+        <div className="mb-6">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors duration-200">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">뒤로 가기</span>
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">단어 게임</h1>
+          <p className="mt-2 text-gray-600">내려오는 단어를 말하면서 학습해보세요.</p>
+          <p className="mt-1 text-gray-500">Учите слова, произнося падающие слова.</p>
+        </div>
 
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 bg-gray-100 p-3 rounded-lg">
-            <div className="grid grid-cols-3 gap-4 w-full sm:flex sm:gap-8 mb-3 sm:mb-0">
-              <div className="text-center sm:text-left">
+        {/* 게임 컨테이너 */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {/* 게임 상태 표시 */}
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+              <div className="text-center">
                 <div className="text-sm text-gray-600">점수 / Счет</div>
-                <div className="text-lg font-bold">{score}</div>
+                <div className="text-2xl font-bold text-indigo-600">{score}</div>
               </div>
-              <div className="text-center sm:text-left">
+              <div className="text-center">
                 <div className="text-sm text-gray-600">목숨 / Жизни</div>
-                <div className="text-lg font-bold text-red-500">{lives}</div>
+                <div className="text-2xl font-bold text-red-600">{lives}</div>
               </div>
-              <div className="text-center sm:text-left">
+              <div className="text-center">
                 <div className="text-sm text-gray-600">레벨 / Уровень</div>
-                <div className="text-lg font-bold text-blue-500">{level}</div>
+                <div className="text-2xl font-bold text-green-600">{level}</div>
               </div>
+              <button
+                onClick={toggleDisplayMode}
+                className="hidden sm:block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                {displayMode === "korean" ? "한국어" : displayMode === "russian" ? "러시아어" : "발음"}
+              </button>
             </div>
-            <Button onClick={toggleDisplayMode} className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600">
-              {displayMode === "korean" ? "한국어" : displayMode === "russian" ? "러시아어" : "발음"}
-            </Button>
           </div>
 
           {gameState === "ready" && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">레벨 선택 / Выбор уровня:</label>
-              <select value={selectedLevel} onChange={(e) => setSelectedLevel(Number(e.target.value))} className="w-full p-2 border rounded-md text-base">
-                <option value={1}>초급 / Начальный</option>
-                <option value={2}>중급 / Средний</option>
-                <option value={3}>고급 / Продвинутый</option>
-              </select>
+            <div className="p-6">
+              <div className="max-w-md mx-auto space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">난이도 선택 / Выбор уровня</label>
+                  <select
+                    value={selectedLevel}
+                    onChange={(e) => setSelectedLevel(Number(e.target.value))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value={1}>초급 / Начальный</option>
+                    <option value={2}>중급 / Средний</option>
+                    <option value={3}>고급 / Продвинутый</option>
+                  </select>
+                </div>
+                <button onClick={startGame} className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  게임 시작 / Начать игру
+                </button>
+              </div>
             </div>
           )}
 
-          <div className="relative h-[50vh] sm:h-96 border-2 border-gray-200 rounded-lg mb-4 overflow-hidden bg-gray-50">
-            {fallingWords.map((word) => (
-              <div
-                key={word.id}
-                className={`absolute px-2 sm:px-3 py-1 sm:py-2 bg-white border border-gray-300 rounded shadow-sm transition-all duration-200 text-sm sm:text-base
-                  ${word.matched ? "opacity-0 scale-150 text-green-500" : ""}`}
-                style={{
-                  left: `${word.x}%`,
-                  top: `${word.y}%`,
-                  transform: "translateX(-50%)",
-                }}
-              >
-                {getDisplayText(word)}
+          {/* 게임 화면 */}
+          {gameState === "playing" && (
+            <div className="p-4">
+              {/* 음성 인식 상태 */}
+              <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                <VoiceStatus isListening={isListening} />
+                <button onClick={endGame} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                  게임 종료 / Завершить
+                </button>
               </div>
-            ))}
-          </div>
 
-          <div className="space-y-3">
-            {gameState === "ready" && (
-              <Button onClick={startGame} className="w-full bg-green-500 hover:bg-green-600">
-                게임 시작 / Начать игру
-              </Button>
-            )}
+              {/* 게임 영역 */}
+              <div className="relative h-[60vh] border-2 border-gray-200 rounded-lg bg-gray-50">
+                {fallingWords.map((word) => (
+                  <div
+                    key={word.id}
+                    className={`absolute px-3 py-2 bg-white border border-gray-200 rounded-lg shadow-sm 
+    transition-all duration-200 transform -translate-x-1/2
+    ${word.matched ? "opacity-0 scale-150 text-green-600" : ""}`}
+                    style={{
+                      left: `${word.x}%`,
+                      top: `${word.y}%`,
+                      transition: "top 16ms linear", // 부드러운 낙하 움직임
+                    }}
+                  >
+                    {getDisplayText(word)}
+                  </div>
+                ))}
+              </div>
 
-            {gameState === "playing" && (
-              <div className="space-y-3">
-                <div className="flex flex-col gap-2">
-                  <Button onClick={endGame} variant="destructive" className="w-full">
-                    게임 종료 / Завершить игру
-                  </Button>
-                  <VoiceStatus isListening={isListening} />
+              {/* 음성 인식 결과 */}
+              {transcript && <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">인식된 음성 / Распознанный голос: {transcript}</div>}
+            </div>
+          )}
+
+          {/* 게임 종료 화면 */}
+          {gameState === "ended" && (
+            <div className="p-6">
+              <div className="max-w-md mx-auto space-y-6">
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 text-center">
+                  <h2 className="text-2xl font-bold text-indigo-900 mb-2">게임 종료! / Игра окончена!</h2>
+                  <p className="text-indigo-700">
+                    최종 점수: {score} / Итоговый счет: {score}
+                  </p>
+                  <p className="text-indigo-700">
+                    최고 레벨: {level} / Максимальный уровень: {level}
+                  </p>
                 </div>
-                {transcript && <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">인식된 음성: {transcript} / Распознанный голос</div>}
-              </div>
-            )}
-
-            {gameState === "ended" && (
-              <div className="space-y-3">
-                <Alert className="bg-blue-50 border-blue-200">
-                  <AlertDescription className="text-center">
-                    <div className="font-bold text-lg">게임 종료! / Игра окончена!</div>
-                    <div className="text-sm mt-1">
-                      최종 점수: {score} / 최고 레벨: {level}
-                    </div>
-                    <div className="text-sm">
-                      Итоговый счет: {score} / Максимальный уровень: {level}
-                    </div>
-                  </AlertDescription>
-                </Alert>
-                <Button onClick={startGame} className="w-full bg-green-500 hover:bg-green-600">
+                <button onClick={startGame} className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                   다시 시작 / Начать заново
-                </Button>
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className="mt-4">
+          {/* 맞춘 단어 목록 */}
+          <div className="p-4 border-t border-gray-200">
             <h3 className="font-bold mb-2">맞춘 단어 목록 / Список угаданных слов:</h3>
-            <div className="flex flex-wrap gap-2 max-h-28 sm:max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-lg">
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-3 bg-gray-50 rounded-lg">
               {matchedWords.map((word, index) => (
-                <div key={index} className="bg-green-100 px-2 py-1 rounded text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
-                  <span>
+                <div key={index} className="bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-sm flex items-center gap-2">
+                  <span className="text-gray-900">
                     {word.korean} - {word.russian}
                   </span>
-                  <span className="bg-green-200 px-1.5 py-0.5 rounded-full text-xs">{word.count}회</span>
-                  <span className="bg-blue-200 px-1.5 py-0.5 rounded-full text-xs">{word.totalScore}점</span>
+                  <span className="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full text-xs">{word.count}회</span>
+                  <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs">{word.totalScore}점</span>
                 </div>
               ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
-export default FallingWordsGame;
+// VoiceStatus 컴포넌트
+function VoiceStatus({ isListening }: { isListening: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+      {isListening ? (
+        <>
+          <Mic className="w-5 h-5 text-green-500 animate-pulse" />
+          <span className="text-green-600 text-sm">음성 인식 활성화 / Голосовой ввод активен</span>
+        </>
+      ) : (
+        <>
+          <MicOff className="w-5 h-5 text-red-500" />
+          <span className="text-red-600 text-sm">음성 인식 비활성화 / Голосовой ввод отключен</span>
+        </>
+      )}
+    </div>
+  );
+}
