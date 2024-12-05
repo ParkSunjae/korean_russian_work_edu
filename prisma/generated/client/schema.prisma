@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "./generated/client"
+  previewFeatures = []
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 단어 사전
+model Dictionary {
+  id            String     @id @default(cuid())
+  korean        String     @unique
+  english       String?
+  russian       String
+  pronunciation String
+  definition    String?
+  definition_ru String?
+  category      String     @default("기본")
+  difficulty    String     @default("초급")
+  examples      Example[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  stats         WordStats?
+}
+
+// 통계
+model Statistics {
+  id          String   @id @default(cuid())
+  totalVisits Int      @default(0)
+  lastUpdated DateTime @updatedAt
+}
+
+model MenuStats {
+  id          String   @id @default(cuid())
+  menuId      String   @unique
+  name        String
+  nameRu      String
+  count       Int      @default(0)
+  lastClicked DateTime @default(now())
+}
+
+model WordStats {
+  id            String     @id @default(cuid())
+  korean        String     @unique
+  russian       String
+  pronunciation String
+  count         Int        @default(0)
+  lastUsed      DateTime   @default(now())
+  dictionary    Dictionary @relation(fields: [korean], references: [korean])
+}
+
+// 공지사항
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 게임 기록
+model GameRecord {
+  id        String   @id @default(cuid())
+  score     Int
+  level     Int
+  duration  Int // 게임 진행 시간(초)
+  createdAt DateTime @default(now())
+}
+
+model Example {
+  id           Int        @id @default(autoincrement())
+  text         String
+  dictionary   Dictionary @relation(fields: [dictionaryId], references: [id])
+  dictionaryId String
+}
+
+model Suggestion {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
