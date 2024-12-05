@@ -1,6 +1,6 @@
 {
   "totalVisits": 0,
-  "lastUpdated": "2024-12-05T06:40:12.316Z",
+  "lastUpdated": "2024-12-05T07:23:51.400Z",
   "menuStats": {
     "consonants": {
       "name": "자음",
@@ -10,12 +10,12 @@
     "home": {
       "name": "홈",
       "nameRu": "Главная",
-      "count": 12
+      "count": 15
     },
     "words": {
       "name": "단어",
       "nameRu": "Слова",
-      "count": 13
+      "count": 14
     },
     "batchims": {
       "name": "받침",
@@ -25,7 +25,7 @@
     "syllables": {
       "name": "자음+모음",
       "nameRu": "Слоги",
-      "count": 7
+      "count": 9
     },
     "games": {
       "name": "게임",
@@ -53,7 +53,7 @@
       "korean": "나",
       "russian": "мне",
       "pronunciation": "na",
-      "count": 9
+      "count": 12
     },
     {
       "korean": "반갑습니다",

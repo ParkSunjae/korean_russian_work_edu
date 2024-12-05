@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
-const STATISTICS_FILE = path.join(process.cwd(), "src/data/statistics.json");
+const STATISTICS_FILE = path.join(process.cwd(), "public/data/statistics.json");
 
 interface WordStat {
   korean: string;

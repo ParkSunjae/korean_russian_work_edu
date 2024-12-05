@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import { Suggestion } from "@/types/suggestion";
 
-const SUGGESTIONS_FILE = path.join(process.cwd(), "src/data/suggestions.json");
+const SUGGESTIONS_FILE = path.join(process.cwd(), "public/data/suggestions.json");
 
 async function readSuggestions(): Promise<Suggestion[]> {
   const data = await fs.readFile(SUGGESTIONS_FILE, "utf-8");

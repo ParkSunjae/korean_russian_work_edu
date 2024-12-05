@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { Statistics, MenuStat } from "@/types/statistics";
 
-const STATISTICS_FILE = path.join(process.cwd(), "src/data/statistics.json");
+const STATISTICS_FILE = path.join(process.cwd(), "public/data/statistics.json");
 
 export async function readStatistics(): Promise<Statistics> {
   try {

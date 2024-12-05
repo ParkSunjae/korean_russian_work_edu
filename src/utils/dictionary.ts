@@ -1,4 +1,4 @@
-import dictionaryData from "@/data/dictionary-data.json";
+import dictionaryData from "../../public/data/dictionary-data.json";
 import { DictionaryEntry, DictionaryData } from "@/types/dictionary";
 
 export const koreanDictionary = (dictionaryData as DictionaryData).words.map((word, index) => ({

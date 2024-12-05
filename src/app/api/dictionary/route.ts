@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
-// 데이터 디렉토리 경로 설정
-const DATA_DIR = path.join(process.cwd(), "src", "data");
+// public/data 디렉토리 경로로 변경
+const DATA_DIR = path.join(process.cwd(), "public", "data");
 const DICTIONARY_FILE = path.join(DATA_DIR, "dictionary-data.json");
 
 // 초기 데이터 구조
