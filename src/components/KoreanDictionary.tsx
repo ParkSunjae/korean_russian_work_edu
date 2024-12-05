@@ -61,6 +61,44 @@ const KoreanDictionary = () => {
     }
   };
 
+  const handlePlayPronunciation = async (word: DictionaryEntry, language: "ko" | "en" | "ru") => {
+    // 발음 재생
+    playPronunciation(word, language);
+
+    // 통계 저장 (한국어 발음 버튼 클릭 시에만)
+    if (language === "ko") {
+      try {
+        const wordData = {
+          korean: word.korean,
+          russian: word.russian,
+          pronunciation: word.pronunciation,
+        };
+
+        console.log("저장할 단어 데이터:", wordData);
+
+        const response = await fetch("/api/statistics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "word",
+            data: wordData,
+          }),
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+          console.error("Failed to save word statistics:", result.error);
+        } else {
+          console.log("단어 통계 저장 성공:", result.data);
+        }
+      } catch (error) {
+        console.error("Failed to update word statistics:", error);
+      }
+    }
+  };
+
   const filteredWords = dictionary.filter(
     (word) =>
       (word.korean.includes(searchTerm) ||
@@ -126,17 +164,17 @@ const KoreanDictionary = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-lg font-bold">{word.korean}</h3>
-                          <Button variant="ghost" size="icon" onClick={() => playPronunciation(word, "ko")} title="한국어 발음 듣기">
+                          <Button variant="ghost" size="icon" onClick={() => handlePlayPronunciation(word, "ko")} title="한국어 발음 듣기">
                             <Volume2 className="h-4 w-4" />
                           </Button>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <span>{word.english}</span>
-                          <Button variant="ghost" size="icon" onClick={() => playPronunciation(word, "en")} title="영어 발음 듣기">
+                          <Button variant="ghost" size="icon" onClick={() => handlePlayPronunciation(word, "en")} title="영어 발음 듣기">
                             <Volume2 className="h-4 w-4" />
                           </Button>
                           |<span>{word.russian}</span>
-                          <Button variant="ghost" size="icon" onClick={() => playPronunciation(word, "ru")} title="러시아어 발음 듣기">
+                          <Button variant="ghost" size="icon" onClick={() => handlePlayPronunciation(word, "ru")} title="러시아어 발음 듣기">
                             <Volume2 className="h-4 w-4" />
                           </Button>
                         </div>

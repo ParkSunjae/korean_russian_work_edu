@@ -210,10 +210,38 @@ const WordsPage: React.FC = () => {
     }
   };
 
-  const playPronunciation = (text: string) => {
+  const handlePlayPronunciation = async (word: WordType, language: "ko" | "ru") => {
+    // 발음 재생
+    const text = language === "ko" ? word.korean : word.russian;
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
+    utterance.lang = language === "ko" ? "ko-KR" : "ru-RU";
     speechSynthesis.speak(utterance);
+
+    // 한국어 발음 듣기 시에만 통계 저장
+    if (language === "ko") {
+      try {
+        const response = await fetch("/api/statistics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "word",
+            data: {
+              korean: word.korean,
+              russian: word.russian,
+              pronunciation: word.pronunciation,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to save word statistics");
+        }
+      } catch (error) {
+        console.error("Error saving word statistics:", error);
+      }
+    }
   };
 
   // 페이징 처리
@@ -249,7 +277,7 @@ const WordsPage: React.FC = () => {
                   </div>
                   <div>
                     <span className="font-semibold">발음:</span> {searchResult.pronunciation}
-                    <button onClick={() => playPronunciation(searchResult.pronunciation)} className="ml-2 text-blue-500 hover:text-blue-700">
+                    <button onClick={() => handlePlayPronunciation(searchResult, "ko")} className="ml-2 text-blue-500 hover:text-blue-700">
                       🔊
                     </button>
                   </div>
@@ -266,7 +294,7 @@ const WordsPage: React.FC = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-2xl font-bold text-blue-600">{word.korean}</span>
-                      <button onClick={() => playPronunciation(word.pronunciation)} className="text-blue-500 hover:text-blue-700 p-2">
+                      <button onClick={() => handlePlayPronunciation(word, "ko")} className="text-blue-500 hover:text-blue-700 p-2">
                         🔊
                       </button>
                     </div>

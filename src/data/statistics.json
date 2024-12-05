@@ -1,67 +1,73 @@
 {
-  "totalVisits": 4,
+  "totalVisits": 0,
+  "lastUpdated": "2024-12-05T04:07:45.438Z",
   "menuStats": {
     "consonants": {
-      "id": "consonants",
-      "count": 3,
-      "lastClicked": "2024-12-04T22:41:17.597Z",
       "name": "자음",
-      "nameRu": "Согласные"
+      "nameRu": "Согласные",
+      "count": 2
     },
-    "vowels": {
-      "id": "vowels",
-      "count": 1,
-      "lastClicked": "2024-12-04T22:41:18.372Z",
-      "name": "모음",
-      "nameRu": "Гласные"
-    },
-    "syllables": {
-      "id": "syllables",
-      "count": 3,
-      "lastClicked": "2024-12-04T22:37:16.464Z",
-      "name": "자음+모음",
-      "nameRu": "Слоги"
+    "home": {
+      "name": "홈",
+      "nameRu": "Главная",
+      "count": 9
     },
     "words": {
-      "id": "words",
-      "count": 2,
-      "lastClicked": "2024-12-04T22:37:14.117Z",
       "name": "단어",
-      "nameRu": "Слова"
+      "nameRu": "Слова",
+      "count": 4
     },
-    "sentences": {
-      "id": "sentences",
-      "count": 0,
-      "lastClicked": "",
-      "name": "문장",
-      "nameRu": "Предложения"
+    "batchims": {
+      "name": "받침",
+      "nameRu": "Батчим",
+      "count": 1
+    },
+    "syllables": {
+      "name": "자음+모음",
+      "nameRu": "Слоги",
+      "count": 1
     },
     "games": {
-      "id": "games",
-      "count": 2,
-      "lastClicked": "2024-12-04T22:26:30.176Z",
       "name": "게임",
-      "nameRu": "Игры"
+      "nameRu": "Игры",
+      "count": 1
     },
-    "notices": {
-      "id": "notices",
-      "count": 0,
-      "lastClicked": "",
-      "name": "공지사항",
-      "nameRu": "Объявления"
+    "suggestions": {
+      "name": "건의사항",
+      "nameRu": "Предложения",
+      "count": 1
     }
   },
-  "wordStats": {
-    "안녕하세요": {
+  "wordStats": [
+    {
+      "korean": "반갑습니다",
+      "russian": "Рад встрече",
+      "pronunciation": "bangabseubnida",
+      "count": 2
+    },
+    {
       "korean": "안녕하세요",
       "russian": "Здравствуйте",
+      "pronunciation": "annyeonghaseyo",
       "count": 1
     },
-    "감사합니다": {
-      "korean": "감사합니다",
-      "russian": "Спасибо",
+    {
+      "korean": "우리",
+      "russian": "мы",
+      "pronunciation": "uri",
+      "count": 1
+    },
+    {
+      "korean": "나",
+      "russian": "мне",
+      "pronunciation": "na",
+      "count": 1
+    },
+    {
+      "korean": "네",
+      "russian": "да",
+      "pronunciation": "ne",
       "count": 1
     }
-  },
-  "lastUpdated": "2024-12-05T03:32:42.225Z"
+  ]
 }

@@ -1,61 +1,76 @@
-import fs from 'fs';
-import { Statistics } from '@/types/statistics';
-import { MenuId } from '@/constants/menu';
-import { DATA_PATHS } from '@/constants/paths';
+import fs from "fs/promises";
+import path from "path";
+import { Statistics, MenuStat } from "@/types/statistics";
 
-export const getStatistics = (): Statistics => {
+const STATISTICS_FILE = path.join(process.cwd(), "src/data/statistics.json");
+
+export async function readStatistics(): Promise<Statistics> {
   try {
-    return JSON.parse(fs.readFileSync(DATA_PATHS.STATISTICS, 'utf-8'));
+    const data = await fs.readFile(STATISTICS_FILE, "utf-8");
+    return JSON.parse(data);
   } catch (error) {
-    console.error('통계 데이터 읽기 실패:', error);
-    throw error;
+    // 파일이 없거나 읽기 실패시 기본값 반환
+    return {
+      totalVisits: 0,
+      lastUpdated: new Date().toISOString(),
+      menuStats: {},
+      wordStats: [],
+    };
   }
-};
+}
 
-type StatisticsData = 
-  | { type: 'menu'; data: { menuId: MenuId; count: number } }
-  | { type: 'word'; data: { korean: string; russian: string } }
-  | { type: 'visit'; data: { increment: boolean } };
+export async function writeStatistics(statistics: Statistics): Promise<void> {
+  await fs.writeFile(STATISTICS_FILE, JSON.stringify(statistics, null, 2));
+}
 
-export const updateStatistics = async (
-  type: StatisticsData['type'],
-  data: StatisticsData extends { type: typeof type } ? StatisticsData['data'] : never
-): Promise<Statistics> => {
+export async function updateStatistics(type: string, data: any): Promise<Statistics> {
   try {
-    const stats = getStatistics();
+    const stats = await readStatistics();
 
     switch (type) {
-      case 'menu':
-        const { menuId, count } = data as { menuId: MenuId; count: number };
-        if (menuId in stats.menuStats) {
+      case "menu": {
+        const menuId = data.id;
+        const count = (stats.menuStats[menuId]?.count || 0) + 1;
+
+        if (!stats.menuStats[menuId]) {
+          stats.menuStats[menuId] = {
+            name: data.name,
+            nameRu: data.nameRu,
+            count: 1,
+            lastClicked: new Date().toISOString(),
+          };
+        } else {
           stats.menuStats[menuId].count = count;
           stats.menuStats[menuId].lastClicked = new Date().toISOString();
-          console.log(`��뉴 ${menuId} 카운트 업데이트: ${count}`);
         }
         break;
+      }
+      case "word": {
+        const { korean, russian, pronunciation } = data;
+        const existingWordIndex = stats.wordStats.findIndex((word) => word.korean === korean);
 
-      case 'word':
-        const { korean, russian } = data as { korean: string; russian: string };
-        if (!stats.wordStats[korean]) {
-          stats.wordStats[korean] = { korean, russian, count: 0 };
+        if (existingWordIndex === -1) {
+          stats.wordStats.push({
+            korean,
+            russian,
+            pronunciation,
+            count: 1,
+          });
+        } else {
+          stats.wordStats[existingWordIndex].count += 1;
         }
-        stats.wordStats[korean].count += 1;
-        break;
 
-      case 'visit':
-        const visitData = data as { increment: boolean };
-        if (visitData.increment) {
-          stats.totalVisits = (stats.totalVisits || 0) + 1;
-          console.log('방문자 수 증가:', stats.totalVisits);
-        }
+        // 카운트 기준으로 내림차순 정렬
+        stats.wordStats.sort((a, b) => b.count - a.count);
         break;
+      }
     }
 
     stats.lastUpdated = new Date().toISOString();
-    await fs.promises.writeFile(DATA_PATHS.STATISTICS, JSON.stringify(stats, null, 2), 'utf-8');
+    await writeStatistics(stats);
     return stats;
   } catch (error) {
-    console.error('통계 업데이트 실패:', error);
+    console.error("통계 업데이트 실패:", error);
     throw error;
   }
-}; 
+}

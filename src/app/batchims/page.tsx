@@ -37,7 +37,7 @@ const BatchimsPage: React.FC = () => {
             <p className="text-gray-600">Батчим - это согласная буква в конце слога в корейском языке.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {BATCHIMS.map((batchim) => (
               <Card key={batchim.char} className="bg-white shadow-md rounded-lg">
                 <CardContent>

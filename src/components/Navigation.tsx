@@ -29,7 +29,11 @@ const Navigation: React.FC = () => {
         },
         body: JSON.stringify({
           type: "menu",
-          data: menuId,
+          data: {
+            id: menuId,
+            name: menuItems.find((item) => item.id === menuId)?.label || "",
+            nameRu: menuItems.find((item) => item.id === menuId)?.labelRu || "",
+          },
         }),
       });
     } catch (error) {
