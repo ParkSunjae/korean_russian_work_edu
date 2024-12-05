@@ -1,5 +1,7 @@
 // next.config.js
-const path = require("path");
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -10,12 +12,15 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/ads.txt',
-        destination: '/api/ads',
+        source: "/ads.txt",
+        destination: "/api/ads",
         permanent: true,
       },
     ];
   },
-}
+  env: {
+    GOOGLE_TRANSLATE_API_KEY: process.env.GOOGLE_TRANSLATE_API_KEY,
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

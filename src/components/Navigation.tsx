@@ -37,12 +37,12 @@ const Navigation: React.FC = () => {
     }
 
     router.push(href);
-    setIsOpen(false); // 메뉴 클릭 시 닫기
+    setIsOpen(false);
   };
 
   return (
     <>
-      <button onClick={() => setIsOpen(!isOpen)} className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md md:hidden">
+      <button onClick={() => setIsOpen(!isOpen)} className="fixed top-4 right-4 z-50 p-2 rounded-lg bg-white shadow-md md:hidden">
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 

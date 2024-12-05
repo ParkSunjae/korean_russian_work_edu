@@ -1,26 +1,13 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/Input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import { Select } from '@/components/Select';
-import { Button } from '@/components/Button';
-import { Volume2 } from 'lucide-react';
-import { koreanDictionary, type Word } from "@/utils/dictionary";
-
-interface DictionaryEntry {
-  id: number;
-  korean: string;
-  english: string;
-  russian: string;
-  pronunciation: string;
-  definition: string;
-  definition_ru: string;
-  category: string;
-  difficulty: string;
-  example: string;
-  example_ru: string;
-}
+import React, { useState, useEffect } from "react";
+import { Input } from "@/components/Input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
+import { Select } from "@/components/Select";
+import { Button } from "@/components/Button";
+import { Volume2 } from "lucide-react";
+import { DictionaryEntry } from "@/types/dictionary";
+import { koreanDictionary } from "@/utils/dictionary";
 
 interface DictionaryState {
   dictionary: DictionaryEntry[];
@@ -32,54 +19,55 @@ const KoreanDictionary = () => {
   const [dictionary, setDictionary] = useState<DictionaryEntry[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [difficulties, setDifficulties] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setDictionary(koreanDictionary);
-    setCategories(['all', ...Array.from(new Set(koreanDictionary.map(word => word.category)))]);
-    setDifficulties(['all', ...Array.from(new Set(koreanDictionary.map(word => word.difficulty)))]);
+    setCategories(["all", ...Array.from(new Set(koreanDictionary.map((word) => word.category)))]);
+    setDifficulties(["all", ...Array.from(new Set(koreanDictionary.map((word) => word.difficulty)))]);
     setIsLoading(false);
   }, []);
 
   // 발음 재생 함수
   const speakText = (text: string, lang: string) => {
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
       utterance.rate = 0.8;
-      
+
       utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event);
+        console.error("Speech synthesis error:", event);
       };
 
       window.speechSynthesis.speak(utterance);
     }
   };
 
-  const playPronunciation = (word: DictionaryEntry, language: 'ko' | 'en' | 'ru') => {
+  const playPronunciation = (word: DictionaryEntry, language: "ko" | "en" | "ru") => {
     switch (language) {
-      case 'ko':
-        speakText(word.korean, 'ko-KR');
+      case "ko":
+        speakText(word.korean, "ko-KR");
         break;
-      case 'en':
-        speakText(word.english, 'en-US');
+      case "en":
+        speakText(word.english, "en-US");
         break;
-      case 'ru':
-        speakText(word.russian, 'ru-RU');
+      case "ru":
+        speakText(word.russian, "ru-RU");
         break;
     }
   };
 
-  const filteredWords = dictionary.filter(word => 
-    (word.korean.includes(searchTerm) || 
-     word.english.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     word.russian.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (selectedCategory === 'all' || word.category === selectedCategory) &&
-    (selectedDifficulty === 'all' || word.difficulty === selectedDifficulty)
+  const filteredWords = dictionary.filter(
+    (word) =>
+      (word.korean.includes(searchTerm) ||
+        word.english.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        word.russian.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (selectedCategory === "all" || word.category === selectedCategory) &&
+      (selectedDifficulty === "all" || word.difficulty === selectedDifficulty)
   );
 
   if (isLoading) {
@@ -98,21 +86,17 @@ const KoreanDictionary = () => {
         </CardHeader>
         <CardContent>
           <div className="mb-4 space-y-2">
-            <Input 
-              placeholder="단어 검색 (한국어, 영어, 러시아어)" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            
+            <Input placeholder="단어 검색 (한국어, 영어, 러시아어)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+
             <div className="flex space-x-2 z-auto">
               <Select
                 label="카테고리"
                 options={[
-                  { value: 'all', label: '전체 카테고리' },
-                  ...categories.map(category => ({
+                  { value: "all", label: "전체 카테고리" },
+                  ...categories.map((category) => ({
                     value: category,
-                    label: category
-                  }))
+                    label: category,
+                  })),
                 ]}
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
@@ -121,11 +105,11 @@ const KoreanDictionary = () => {
               <Select
                 label="난이도"
                 options={[
-                  { value: 'all', label: '전체 난이도' },
-                  ...difficulties.map(difficulty => ({
+                  { value: "all", label: "전체 난이도" },
+                  ...difficulties.map((difficulty) => ({
                     value: difficulty,
-                    label: difficulty
-                  }))
+                    label: difficulty,
+                  })),
                 ]}
                 value={selectedDifficulty}
                 onChange={(e) => setSelectedDifficulty(e.target.value)}
@@ -134,7 +118,7 @@ const KoreanDictionary = () => {
           </div>
 
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
-            {filteredWords.map(word => (
+            {filteredWords.map((word) => (
               <Card key={word.id} className="hover:bg-gray-50 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex flex-col">
@@ -142,33 +126,17 @@ const KoreanDictionary = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-lg font-bold">{word.korean}</h3>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => playPronunciation(word, 'ko')}
-                            title="한국어 발음 듣기"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => playPronunciation(word, "ko")} title="한국어 발음 듣기">
                             <Volume2 className="h-4 w-4" />
                           </Button>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <span>{word.english}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => playPronunciation(word, 'en')}
-                            title="영어 발음 듣기"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => playPronunciation(word, "en")} title="영어 발음 듣기">
                             <Volume2 className="h-4 w-4" />
                           </Button>
-                          |
-                          <span>{word.russian}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => playPronunciation(word, 'ru')}
-                            title="러시아어 발음 듣기"
-                          >
+                          |<span>{word.russian}</span>
+                          <Button variant="ghost" size="icon" onClick={() => playPronunciation(word, "ru")} title="러시아어 발음 듣기">
                             <Volume2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -178,16 +146,12 @@ const KoreanDictionary = () => {
                     <div className="mt-4 space-y-2">
                       <div className="border-l-2 border-blue-500 pl-2">
                         <p className="text-sm">{word.definition}</p>
-                        <p className="mt-2 italic text-sm text-gray-700">
-                          예시: {word.example}
-                        </p>
+                        <p className="mt-2 italic text-sm text-gray-700">예시: {word.examples[0] || "예시 없음"}</p>
                       </div>
-                      
+
                       <div className="border-l-2 border-red-500 pl-2">
                         <p className="text-sm">{word.definition_ru}</p>
-                        <p className="mt-2 italic text-sm text-gray-700">
-                          Пример: {word.example_ru}
-                        </p>
+                        <p className="mt-2 italic text-sm text-gray-700">Пример: {word.examples[1] || "Нет примера"}</p>
                       </div>
                     </div>
 
@@ -204,7 +168,8 @@ const KoreanDictionary = () => {
 
           {filteredWords.length === 0 && (
             <p className="text-center text-gray-500">
-              일치하는 단어가 없습니다.<br />
+              일치하는 단어가 없습니다.
+              <br />
               Соответствующие слова не найдены.
             </p>
           )}

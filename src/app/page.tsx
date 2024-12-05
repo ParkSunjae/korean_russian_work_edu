@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Notice } from "@/types/notice";
 import { Statistics } from "@/types/statistics";
+import React from "react";
 
 export default function Home() {
   const [notices, setNotices] = useState<Notice[]>([]);

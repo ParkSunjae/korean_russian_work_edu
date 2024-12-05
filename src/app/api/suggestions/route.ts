@@ -20,9 +20,16 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const newSuggestion = await request.json();
+  const newSuggestion: Omit<Suggestion, "id" | "createdAt"> = await request.json();
   const suggestions = await readSuggestions();
-  suggestions.push({ ...newSuggestion, id: Date.now().toString(), createdAt: new Date().toISOString() });
+
+  const suggestionToAdd: Suggestion = {
+    ...newSuggestion,
+    id: Date.now().toString(),
+    createdAt: new Date().toISOString(),
+  };
+
+  suggestions.push(suggestionToAdd);
   await writeSuggestions(suggestions);
   return NextResponse.json({ success: true });
 }
