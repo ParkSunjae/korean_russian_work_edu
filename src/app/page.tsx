@@ -21,7 +21,7 @@ export default function Home() {
     // Load statistics data
     fetch("/api/statistics")
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: Statistics) => {
         console.log("통계 데이터:", data); // 데이터 확인용 로그
         setStats(data);
       })
@@ -75,10 +75,12 @@ export default function Home() {
                 누적 방문자 수<span className="block text-sm text-gray-600 mt-1">Общее количество посещений</span>
               </h2>
               <div className="flex items-baseline gap-2">
-                <p className="text-2xl md:text-3xl font-bold text-blue-600">{stats?.totalVisits.toLocaleString()}</p>
+                <p className="text-2xl md:text-3xl font-bold text-blue-600">
+                  {stats?.totalVisits ? stats.totalVisits.toLocaleString() : '0'}
+                </p>
                 <span className="text-gray-500">명</span>
               </div>
-              <p className="text-xs text-gray-500 mt-2">마지막 업데이트: {stats?.lastUpdated && new Date(stats.lastUpdated).toLocaleString("ko-KR")}</p>
+              <p className="text-xs text-gray-500 mt-2">마지막 업데이트: {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString('ko-KR') : '-'}</p>
             </div>
 
             {/* Menu Selection Count Card */}

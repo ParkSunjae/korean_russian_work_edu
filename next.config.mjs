@@ -1,8 +1,3 @@
-// next.config.js
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
-}
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -24,4 +19,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig; 

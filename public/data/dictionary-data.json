@@ -169,6 +169,56 @@
       "korean": "마우스",
       "russian": "мышь",
       "pronunciation": "mauseu"
+    },
+    {
+      "korean": "청소기",
+      "russian": "пылесос",
+      "pronunciation": "cheongsogi"
+    },
+    {
+      "korean": "충전기",
+      "russian": "зарядное устройство",
+      "pronunciation": "chungjeongi"
+    },
+    {
+      "korean": "사료",
+      "russian": "корм",
+      "pronunciation": "saryo"
+    },
+    {
+      "korean": "쇼파",
+      "russian": "диван",
+      "pronunciation": "syopa"
+    },
+    {
+      "korean": "침대",
+      "russian": "кровать",
+      "pronunciation": "chimdae"
+    },
+    {
+      "korean": "의자",
+      "russian": "стул",
+      "pronunciation": "uija"
+    },
+    {
+      "korean": "책상",
+      "russian": "стол",
+      "pronunciation": "chaeksang"
+    },
+    {
+      "korean": "창문",
+      "russian": "окно",
+      "pronunciation": "changmun"
+    },
+    {
+      "korean": "문",
+      "russian": "дверь",
+      "pronunciation": "mun"
+    },
+    {
+      "korean": "방문",
+      "russian": "посещать",
+      "pronunciation": "bangmun"
     }
   ]
 }

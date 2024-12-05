@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-import { Notice } from "@/types/notice";
-
-const NOTICES_FILE = path.join(process.cwd(), "public/data/notice.json");
-
-async function readNotices(): Promise<Notice[]> {
-  const data = await fs.readFile(NOTICES_FILE, "utf-8");
-  return JSON.parse(data);
-}
+import prisma from "@/lib/prisma";
 
 export async function GET() {
-  const notices = await readNotices();
-  return NextResponse.json(notices);
+  try {
+    const notices = await prisma.notice.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return NextResponse.json(notices);
+  } catch (error) {
+    console.error('Failed to fetch notices:', error);
+    return NextResponse.json({ error: 'Failed to fetch notices' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const noticeData = await request.json();
+    const notice = await prisma.notice.create({
+      data: noticeData
+    });
+    return NextResponse.json(notice);
+  } catch (error) {
+    console.error('Failed to create notice:', error);
+    return NextResponse.json({ error: 'Failed to create notice' }, { status: 500 });
+  }
 }

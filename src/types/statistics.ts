@@ -17,6 +17,6 @@ export interface WordStat {
 export interface Statistics {
   totalVisits: number;
   lastUpdated: string;
-  menuStats: Record<string, MenuStat>;
+  menuStats: Record<MenuId, MenuStat>;
   wordStats: WordStat[];
 }

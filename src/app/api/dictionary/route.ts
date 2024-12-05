@@ -1,94 +1,89 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import prisma from "@/lib/prisma";
 
-// public/data 디렉토리 경로로 변경
-const DATA_DIR = path.join(process.cwd(), "public", "data");
-const DICTIONARY_FILE = path.join(DATA_DIR, "dictionary-data.json");
-
-// 초기 데이터 구조
-const initialData = {
-  words: [],
-};
-
-async function ensureDirectoryExists() {
+export async function GET(request: Request) {
   try {
-    await fs.access(DATA_DIR);
-  } catch {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-  }
-}
+    const { searchParams } = new URL(request.url);
+    const page = Number(searchParams.get('page')) || 1;
+    const limit = Number(searchParams.get('limit')) || 20;
+    const search = searchParams.get('search') || '';
 
-async function readDictionary() {
-  try {
-    await ensureDirectoryExists();
+    // 전체 개수 조회
+    const total = await prisma.dictionary.count({
+      where: {
+        OR: [
+          { korean: { contains: search } },
+          { russian: { contains: search } }
+        ]
+      }
+    });
 
-    try {
-      await fs.access(DICTIONARY_FILE);
-    } catch {
-      // 파일이 없으면 초기 데이터로 생성
-      await fs.writeFile(DICTIONARY_FILE, JSON.stringify(initialData, null, 2));
-      return initialData;
-    }
+    // 페이징 처리된 데이터 조회
+    const words = await prisma.dictionary.findMany({
+      where: {
+        OR: [
+          { korean: { contains: search } },
+          { russian: { contains: search } }
+        ]
+      },
+      include: {
+        examples: true,
+        stats: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip: (page - 1) * limit,
+      take: limit
+    });
 
-    const data = await fs.readFile(DICTIONARY_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Error reading dictionary:", error);
-    return initialData;
-  }
-}
+    // 클라이언트에 맞는 형식으로 변환
+    const formattedWords = words.map(word => ({
+      ...word,
+      examples: word.examples.map(ex => ex.text)
+    }));
 
-async function writeDictionary(dictionary: any) {
-  try {
-    await ensureDirectoryExists();
-    await fs.writeFile(DICTIONARY_FILE, JSON.stringify(dictionary, null, 2), {
-      mode: 0o666, // 읽기/쓰기 권한 설정
+    return NextResponse.json({
+      words: formattedWords,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
-    console.error("Error writing dictionary:", error);
-    throw error;
-  }
-}
-
-export async function GET() {
-  try {
-    const dictionary = await readDictionary();
-    return NextResponse.json(dictionary);
-  } catch (error) {
-    console.error("GET error:", error);
-    return NextResponse.json({ error: "Failed to read dictionary" }, { status: 500 });
+    console.error('Failed to fetch dictionary:', error);
+    return NextResponse.json({ error: 'Failed to fetch dictionary' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const newWord = await request.json();
-    const dictionary = await readDictionary();
-
-    // 중복 검사
-    const exists = dictionary.words.some((word: any) => word.korean === newWord.korean);
-    if (exists) {
-      return NextResponse.json({ error: "Word already exists", word: newWord }, { status: 400 });
-    }
-
-    dictionary.words.push(newWord);
-    await writeDictionary(dictionary);
-
-    return NextResponse.json({
-      success: true,
-      message: "Word saved successfully",
-      word: newWord,
-    });
-  } catch (error) {
-    console.error("POST error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to save word",
-        details: error instanceof Error ? error.message : "Unknown error",
-        word: request.body,
+    const wordData = await request.json();
+    
+    const word = await prisma.dictionary.create({
+      data: {
+        korean: wordData.korean,
+        english: wordData.english || "",
+        russian: wordData.russian,
+        pronunciation: wordData.pronunciation,
+        definition: wordData.definition || "",
+        definition_ru: wordData.definition_ru || "",
+        category: wordData.category || "기본",
+        difficulty: wordData.difficulty || "초급",
+        examples: {
+          create: wordData.examples?.map((text: string) => ({ text })) || []
+        }
       },
-      { status: 500 }
-    );
+      include: {
+        examples: true
+      }
+    });
+
+    return NextResponse.json(word);
+  } catch (error) {
+    console.error('Failed to create word:', error);
+    return NextResponse.json({ error: 'Failed to create word' }, { status: 500 });
   }
 }

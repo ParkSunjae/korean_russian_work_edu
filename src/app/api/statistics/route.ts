@@ -1,98 +1,142 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import prisma from "@/lib/prisma";
+import { MenuId } from "@/constants/menu";
 
-const STATISTICS_FILE = path.join(process.cwd(), "public/data/statistics.json");
-
-interface WordStat {
-  korean: string;
-  russian: string;
-  pronunciation: string;
-  count: number;
-}
-
-interface Statistics {
-  totalVisits: number;
-  lastUpdated: string;
-  menuStats: Record<string, { name: string; nameRu: string; count: number }>;
-  wordStats: WordStat[];
-}
-
-async function initializeStatisticsFile() {
-  const initialData = {
-    totalVisits: 0,
-    lastUpdated: new Date().toISOString(),
-    menuStats: {},
-    wordStats: [],
-  };
-  await fs.writeFile(STATISTICS_FILE, JSON.stringify(initialData, null, 2));
-  return initialData;
-}
-
-async function readStatistics(): Promise<Statistics> {
+export async function GET() {
   try {
-    const data = await fs.readFile(STATISTICS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    // 파일이 없으면 초기화
-    return initializeStatisticsFile();
-  }
-}
+    const [stats, menuStats, wordStats] = await Promise.all([
+      prisma.statistics.findFirst(),
+      prisma.menuStats.findMany(),
+      prisma.wordStats.findMany({
+        orderBy: { count: 'desc' },
+        take: 10
+      })
+    ]);
 
-async function writeStatistics(statistics: Statistics): Promise<void> {
-  await fs.writeFile(STATISTICS_FILE, JSON.stringify(statistics, null, 2));
+    // 기본값 설정
+    const defaultStats = {
+      totalVisits: 0,
+      lastUpdated: new Date().toISOString(),
+      menuStats: {},
+      wordStats: []
+    };
+
+    // 메뉴 통계 변환
+    const formattedMenuStats = menuStats.reduce<Record<MenuId, any>>((acc, stat) => ({
+      ...acc,
+      [stat.menuId]: {
+        name: stat.name,
+        nameRu: stat.nameRu,
+        count: stat.count,
+        lastClicked: stat.lastClicked
+      }
+    }), {} as Record<MenuId, any>);
+
+    return NextResponse.json({
+      totalVisits: stats?.totalVisits || defaultStats.totalVisits,
+      lastUpdated: stats?.lastUpdated || defaultStats.lastUpdated,
+      menuStats: formattedMenuStats,
+      wordStats: wordStats.map(stat => ({
+        korean: stat.korean,
+        russian: stat.russian,
+        pronunciation: stat.pronunciation,
+        count: stat.count
+      }))
+    });
+  } catch (error) {
+    console.error('Failed to fetch statistics:', error);
+    return NextResponse.json({ error: 'Failed to fetch statistics' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
-  const { type, data } = await request.json();
-  const statistics = await readStatistics();
+  try {
+    const body = await request.json();
+    console.log('Received request body:', body);
 
-  if (type === "word") {
-    // 단어 데이터 유효성 검사
-    if (!data.korean || !data.russian || !data.pronunciation) {
-      console.error("Invalid word data:", data);
-      return NextResponse.json({ success: false, error: "Invalid word data" }, { status: 400 });
+    if (!body || !body.type || !body.data) {
+      console.error('Invalid request body:', body);
+      return NextResponse.json(
+        { error: 'Invalid request body', received: body },
+        { status: 400 }
+      );
     }
 
-    // 기존 단어 찾기
-    const existingWordIndex = statistics.wordStats.findIndex((word) => word.korean === data.korean && word.russian === data.russian);
+    const { type, data } = body;
 
-    if (existingWordIndex === -1) {
-      // 새 단어 추가
-      const newWord: WordStat = {
-        korean: data.korean,
-        russian: data.russian,
-        pronunciation: data.pronunciation,
-        count: 1,
-      };
-      statistics.wordStats.push(newWord);
-      console.log("Added new word:", newWord);
-    } else {
-      // 기존 단어 카운트 증가
-      statistics.wordStats[existingWordIndex].count += 1;
-      console.log("Updated word count:", statistics.wordStats[existingWordIndex]);
-    }
+    switch (type) {
+      case 'menu': {
+        const menuId = data.id;
+        const { name, nameRu } = data;
+        
+        if (!menuId || !name || !nameRu) {
+          console.error('Missing menu data:', data);
+          return NextResponse.json(
+            { error: 'Missing required menu data', received: data },
+            { status: 400 }
+          );
+        }
 
-    // 카운트 기준 내림차순 정렬
-    statistics.wordStats.sort((a, b) => b.count - a.count);
-  } else if (type === "menu") {
-    if (!statistics.menuStats[data.id]) {
-      statistics.menuStats[data.id] = {
-        name: data.name,
-        nameRu: data.nameRu,
-        count: 0,
-      };
+        // 메뉴 통계 업데이트
+        const result = await prisma.menuStats.upsert({
+          where: { menuId },
+          update: {
+            count: { increment: 1 },
+            lastClicked: new Date()
+          },
+          create: {
+            menuId,
+            name,
+            nameRu,
+            count: 1,
+            lastClicked: new Date()
+          }
+        });
+
+        return NextResponse.json({ success: true, data: result });
+      }
+
+      case 'word': {
+        const { korean, russian, pronunciation } = data;
+        if (!korean || !russian || !pronunciation) {
+          console.error('Missing word data:', data);
+          return NextResponse.json(
+            { error: 'Missing required word data', received: data },
+            { status: 400 }
+          );
+        }
+
+        // 단어 통계 업데이트
+        const result = await prisma.wordStats.upsert({
+          where: { korean },
+          update: {
+            count: { increment: 1 },
+            lastUsed: new Date()
+          },
+          create: {
+            korean,
+            russian,
+            pronunciation,
+            count: 1,
+            lastUsed: new Date()
+          }
+        });
+
+        return NextResponse.json({ success: true, data: result });
+      }
+
+      default:
+        console.error('Invalid statistics type:', type);
+        return NextResponse.json(
+          { error: 'Invalid statistics type', received: { type, data } },
+          { status: 400 }
+        );
     }
-    statistics.menuStats[data.id].count += 1;
+  } catch (error) {
+    console.error('Failed to update statistics:', error);
+    return NextResponse.json(
+      { error: 'Failed to update statistics', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
-
-  statistics.lastUpdated = new Date().toISOString();
-  await writeStatistics(statistics);
-
-  return NextResponse.json({ success: true, data: statistics.wordStats });
-}
-
-export async function GET() {
-  const statistics = await readStatistics();
-  return NextResponse.json(statistics);
 }
