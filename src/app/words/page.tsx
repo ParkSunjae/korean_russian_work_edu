@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Search, Volume2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DictionaryEntry } from "@/types/dictionary";
+import PageHeader from "@/components/layout/PageHeader";
 
 // 한글 자음과 모음 매핑
 const KOREAN_CHARS = {
@@ -189,14 +190,17 @@ export default function WordsPage() {
   const loadWords = useCallback(async (page: number, search: string = "") => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `/api/dictionary?page=${page}&limit=${itemsPerPage}&search=${search}`
-      );
+      const response = await fetch(`/api/dictionary?page=${page}&limit=${itemsPerPage}&search=${search}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch dictionary");
+      }
       const data = await response.json();
-      setWords(data.words);
-      setTotalPages(data.pagination.totalPages);
+      setWords(data.words || []);
+      setTotalPages(data.pagination?.totalPages || 0);
     } catch (error) {
       console.error("Failed to load dictionary:", error);
+      setWords([]);
+      setTotalPages(0);
     } finally {
       setIsLoading(false);
     }
@@ -207,10 +211,10 @@ export default function WordsPage() {
   }, [currentPage, loadWords]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const term = e.target.value;
-  setSearchTerm(term);
-};
-function koreanToEnglish(text: string): string {
+    const term = e.target.value;
+    setSearchTerm(term);
+  };
+  function koreanToEnglish(text: string): string {
     const result: string[] = [];
 
     for (const char of text) {
@@ -243,82 +247,86 @@ function koreanToEnglish(text: string): string {
 
     return result.join("");
   }
-// 검색 버튼 클릭 시 검색 실행
-const handleSearchClick = async () => {
-  if (!searchTerm) return;
-  setIsLoading(true);
-  
-  try {
-    // 1. 기존 단어 검색 (대소문자 구분 없이)
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-    const searchResponse = await fetch(`/api/dictionary?page=1&limit=${itemsPerPage}&search=${normalizedSearch}`);
-    const searchData = await searchResponse.json();
+  // 검색 버튼 클릭 시 검색 실행
+  const handleSearchClick = async () => {
+    if (!searchTerm) return;
+    setIsLoading(true);
 
-    // 검색 결과가 있으면 바로 표시하고 종료
-    if (searchData.words.length > 0) {
-      setWords(searchData.words);
-      setTotalPages(searchData.pagination.totalPages);
-      setIsLoading(false);
-      return;
-    }
+    try {
+      // 1. 기존 단어 검색
+      const normalizedSearch = searchTerm.trim().toLowerCase();
+      const searchResponse = await fetch(`/api/dictionary?search=${normalizedSearch}`);
 
-    // 2. 검색 결과가 없는 경우에만 새 단어 생성 시도
-    const translateResponse = await fetch("/api/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ korean: normalizedSearch }),
-    });
+      if (!searchResponse.ok) {
+        throw new Error("Failed to search dictionary");
+      }
 
-    const translateData = await translateResponse.json();
+      const searchData = await searchResponse.json();
 
-    if (!translateData.success) {
-      console.error("번역 실패:", translateData.error);
-      alert("번역에 실패했습니다: " + translateData.error);
-      setIsLoading(false);
-      return;
-    }
+      // 검색 결과가 있으면 표시
+      if (searchData.words && searchData.words.length > 0) {
+        setWords(searchData.words);
+        setTotalPages(searchData.pagination?.totalPages || 1);
+        setIsLoading(false);
+        return;
+      }
 
-    // 3. 단어 생성 시도
-    const createResponse = await fetch("/api/dictionary", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        korean: normalizedSearch,
-        russian: translateData.russian,
-        pronunciation: koreanToEnglish(normalizedSearch)
-      }),
-    });
+      // 2. 검색 결과가 없는 경우 새 단어 생성 시도
+      const translateResponse = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ korean: normalizedSearch }),
+      });
 
-    const result = await createResponse.json();
+      const translateData = await translateResponse.json();
 
-    if (result.success) {
-      setWords([result.data]);
-      setTotalPages(1);
-    } else {
-      // 이미 존재하는 단어인 경우
-      if (result.error === 'Word already exists' && result.data) {
+      if (!translateData.success) {
+        throw new Error(translateData.error || "Translation failed");
+      }
+
+      // 3. 단어 생성 시도
+      const createResponse = await fetch("/api/dictionary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          korean: normalizedSearch,
+          russian: translateData.russian,
+          pronunciation: koreanToEnglish(normalizedSearch),
+        }),
+      });
+
+      const result = await createResponse.json();
+
+      if (result.success) {
         setWords([result.data]);
         setTotalPages(1);
       } else {
-        console.error("단어 생성 실패:", result.error);
-        alert("단어 생성에 실패했습니다: " + result.error);
+        // 이미 존재하는 단어인 경우
+        if (result.error === "Word already exists" && result.data) {
+          setWords([result.data]);
+          setTotalPages(1);
+        } else {
+          throw new Error(result.error || "Failed to create word");
+        }
       }
+    } catch (error) {
+      console.error("Error during search/create:", error);
+      alert(error instanceof Error ? error.message : "처리 중 오류가 발생했습니다.");
+      setWords([]);
+      setTotalPages(0);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-  } catch (error) {
-    console.error("처리 중 오류 발생:", error);
-    alert("처리 중 오류가 발생했습니다.");
-  } finally {
-    setIsLoading(false);
-  }
-};
-const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === 'Enter') {
-    handleSearchClick();
-  } else if (e.key === 'Escape') {
-    handleReset();
-  }
-};
+  // Enter 키로 검색 실행
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearchClick();
+    } else if (e.key === "Escape") {
+      handleReset();
+    }
+  };
 
   const handlePlayPronunciation = async (word: DictionaryEntry, language: "ko" | "ru") => {
     const text = language === "ko" ? word.korean : word.russian;
@@ -336,8 +344,8 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
             data: {
               korean: word.korean,
               russian: word.russian,
-              pronunciation: word.pronunciation
-            }
+              pronunciation: word.pronunciation,
+            },
           }),
         });
       } catch (error) {
@@ -346,7 +354,7 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     }
   };
 
-  // handleReset 함수 추가
+  // 초기화 함수
   const handleReset = () => {
     setSearchTerm("");
     setCurrentPage(1);
@@ -354,22 +362,9 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-6">
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-4">
-        {/* 헤더 섹션 */}
-        <div className="mb-4 sm:mb-6">
-          <button 
-            onClick={() => router.back()} 
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 mb-2 sm:mb-3 transition-colors duration-200"
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-sm sm:text-base font-medium">뒤로 가기</span>
-          </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">단어</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">단어를 검색하고 추가하여 학습하세요.</p>
-          <p className="mt-0.5 sm:mt-1 text-sm text-gray-500">Ищите, добавляйте и учите слова.</p>
-        </div>
-
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        <PageHeader title="단어 목록" />
         {/* 검색 섹션 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row gap-2">
@@ -394,14 +389,14 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
                 onClick={handleReset}
                 className="w-full sm:w-24 px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="w-4 h-4" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
@@ -422,10 +417,7 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
               <div className="col-span-full text-center py-6 sm:py-8">로딩 중...</div>
             ) : words.length > 0 ? (
               words.map((word) => (
-                <div
-                  key={word.id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
-                >
+                <div key={word.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
                   <div className="p-3 sm:p-4">
                     <div className="flex justify-between items-start mb-2 sm:mb-3">
                       <div className="text-lg sm:text-xl font-bold text-indigo-600">{word.korean}</div>
@@ -448,9 +440,7 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
                 </div>
               ))
             ) : (
-              <div className="col-span-full text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base">
-                검색 결과가 없습니다 / Результаты не найдены
-              </div>
+              <div className="col-span-full text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base">검색 결과가 없습니다 / Результаты не найдены</div>
             )}
           </div>
 

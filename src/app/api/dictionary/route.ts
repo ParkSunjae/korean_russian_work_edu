@@ -1,129 +1,113 @@
 import { NextResponse } from "next/server";
-import prisma from '@/lib/prisma';
+import { prisma } from "@/lib/prisma";
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  details?: string;
-}
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = Number(searchParams.get('page')) || 1;
-    const limit = Number(searchParams.get('limit')) || 30;
-    const search = searchParams.get('search') || '';
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "30", 10);
+    const search = searchParams.get("search") || "";
 
-    // 검색 조건 수정: contains 대신 equals 사용
-    const where = search ? {
-      OR: [
-        { korean: { equals: search } },
-        { russian: { equals: search } }
-      ]
-    } : {};
+    const skip = (page - 1) * limit;
 
-    // 전체 개수 조회
-    const total = await prisma.dictionary.count({ where });
-
-    // 페이징 처리된 데이터 조회
-    const words = await prisma.dictionary.findMany({
-      where,
-      include: {
-        examples: true,
-        stats: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      skip: (page - 1) * limit,
-      take: limit
-    });
-
-    // 클라이언트에 맞는 형식으로 변환
-    const formattedWords = words.map(word => ({
-      ...word,
-      examples: word.examples.map(ex => ex.text)
-    }));
+    const [total, words] = await Promise.all([
+      prisma.dictionary.count({
+        where: {
+          OR: [{ korean: { contains: search, mode: "insensitive" } }, { russian: { contains: search, mode: "insensitive" } }],
+        },
+      }),
+      prisma.dictionary.findMany({
+        where: {
+          OR: [{ korean: { contains: search, mode: "insensitive" } }, { russian: { contains: search, mode: "insensitive" } }],
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+    ]);
 
     return NextResponse.json({
-      words: formattedWords,
+      words,
       pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+      },
     });
   } catch (error) {
-    console.error('Failed to fetch dictionary:', error);
-    return NextResponse.json({ error: 'Failed to fetch dictionary' }, { status: 500 });
+    console.error("Dictionary API error:", error);
+    return NextResponse.json({ error: "Failed to fetch dictionary" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const wordData = await request.json();
-    
-    // 필수 필드 검증
-    if (!wordData?.korean || !wordData?.russian) {
-      return NextResponse.json<ApiResponse<null>>({ 
-        success: false, 
-        error: 'Missing required fields: korean and russian are required' 
-      }, { status: 400 });
+    const body = await request.json();
+    const { korean, russian, pronunciation } = body;
+
+    if (!korean || !russian) {
+      return NextResponse.json({ success: false, error: "Korean and Russian texts are required" }, { status: 400 });
     }
 
-    // 중복 검사
-    const existingWord = await prisma.dictionary.findFirst({
-      where: {
-        korean: {
-          equals: wordData.korean.trim(),
-          mode: 'insensitive'
-        }
-      }
+    // 먼저 존재하는 단어 체크
+    const existingWord = await prisma.dictionary.findUnique({
+      where: { korean },
+      include: {
+        stats: true,
+      },
     });
 
     if (existingWord) {
-      return NextResponse.json<ApiResponse<typeof existingWord>>({
+      return NextResponse.json({
         success: false,
-        error: 'Word already exists',
-        data: existingWord
-      }, { status: 409 });
+        error: "Word already exists",
+        data: existingWord,
+      });
     }
 
     // 새 단어 생성
-    const word = await prisma.dictionary.create({
+    const newWord = await prisma.dictionary.create({
       data: {
-        korean: wordData.korean.trim(),
-        russian: wordData.russian.trim(),
-        english: wordData.english?.trim() || "",
-        pronunciation: wordData.pronunciation?.trim() || "",
-        definition: wordData.definition?.trim() || "",
-        definition_ru: wordData.definition_ru?.trim() || "",
-        category: wordData.category?.trim() || "기본",
-        difficulty: wordData.difficulty?.trim() || "초급",
-        examples: {
-          create: wordData.examples?.map((text: string) => ({ 
-            text: text.trim() 
-          })) || []
-        }
+        korean,
+        russian,
+        pronunciation: pronunciation || "",
+        english: "",
+        definition: "",
+        definition_ru: "",
+        category: "general",
+        difficulty: "basic",
       },
-      include: {
-        examples: true
-      }
     });
 
-    return NextResponse.json<ApiResponse<typeof word>>({
-      success: true,
-      data: word
-    }, { status: 201 });
+    // 통계 데이터 생성
+    const stats = await prisma.wordStats.create({
+      data: {
+        dictionary: {
+          connect: {
+            id: newWord.id,
+          },
+        },
+        count: 0,
+        lastUsed: new Date(),
+      },
+    });
 
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...newWord,
+        stats,
+      },
+    });
   } catch (error) {
-    console.error('Dictionary creation error:', error);
-    return NextResponse.json<ApiResponse<null>>({
-      success: false,
-      error: 'Failed to create dictionary entry',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    console.error("Dictionary API error:", error);
+    if (error instanceof Error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: false, error: "Failed to create word" }, { status: 500 });
   }
 }

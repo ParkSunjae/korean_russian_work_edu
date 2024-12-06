@@ -4,19 +4,23 @@ export interface MenuStat {
   name: string;
   nameRu: string;
   count: number;
-  lastClicked: string;
 }
 
 export interface WordStat {
   korean: string;
   russian: string;
-  pronunciation: string;
   count: number;
 }
 
 export interface Statistics {
+  totalWords: number;
+  todayWords: number;
+  totalPhrases: number;
+  todayPhrases: number;
   totalVisits: number;
   lastUpdated: string;
-  menuStats: Record<MenuId, MenuStat>;
+  menuStats: Record<string, MenuStat>;
   wordStats: WordStat[];
+  recentWords: WordStat[];
+  recentPhrases: WordStat[];
 }

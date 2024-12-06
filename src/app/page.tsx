@@ -1,41 +1,65 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Notice } from "@/types/notice";
-import { Statistics } from "@/types/statistics";
+import { useRouter } from "next/navigation";
+import PageHeader from "@/components/layout/PageHeader";
+import type { Statistics } from "@/types/statistics";
+import type { Notice } from "@/types/notice";
 
-export default function Home() {
-  const [notices, setNotices] = useState<Notice[]>([]);
+export default function HomePage() {
+  const router = useRouter();
   const [stats, setStats] = useState<Statistics | null>(null);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initializePage = async () => {
+    const controller = new AbortController();
+    let isMounted = true;
+
+    const fetchData = async () => {
       try {
-        // 방문자 수 업데이트
-        await fetch('/api/statistics', {
-          method: 'POST',
-          credentials: 'include'
-        });
+        const [statsResponse, noticesResponse] = await Promise.all([
+          fetch("/api/statistics/summary", {
+            signal: controller.signal,
+          }),
+          fetch("/api/notices", {
+            signal: controller.signal,
+          }),
+        ]);
 
-        // 공지사항 로드
-        const noticesRes = await fetch("/api/notices");
-        const noticesData: Notice[] = await noticesRes.json();
-        const latestNotices = noticesData
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 3);
-        setNotices(latestNotices);
+        if (!statsResponse.ok || !noticesResponse.ok) {
+          throw new Error("Failed to fetch data");
+        }
 
-        // 통계 데이터 로드
-        const statsRes = await fetch("/api/statistics");
-        const statsData: Statistics = await statsRes.json();
+        const [statsData, noticesData] = await Promise.all([statsResponse.json(), noticesResponse.json()]);
+
+        if (!isMounted) return;
+
         setStats(statsData);
+        setNotices(noticesData.slice(0, 3)); // 최근 3개만 표시
       } catch (error) {
-        console.error("Error initializing page:", error);
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+        console.error("Failed to fetch data:", error);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    initializePage();
+    fetchData();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center">
@@ -84,12 +108,10 @@ export default function Home() {
                 누적 방문자 수<span className="block text-sm text-gray-600 mt-1">Общее количество посещений</span>
               </h2>
               <div className="flex items-baseline gap-2">
-                <p className="text-2xl md:text-3xl font-bold text-blue-600">
-                  {stats?.totalVisits ? stats.totalVisits.toLocaleString() : '0'}
-                </p>
+                <p className="text-2xl md:text-3xl font-bold text-blue-600">{stats?.totalVisits ? stats.totalVisits.toLocaleString() : "0"}</p>
                 <span className="text-gray-500">명</span>
               </div>
-              <p className="text-xs text-gray-500 mt-2">마지막 업데이트: {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString('ko-KR') : '-'}</p>
+              <p className="text-xs text-gray-500 mt-2">마지막 업데이트: {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString("ko-KR") : "-"}</p>
             </div>
 
             {/* Menu Selection Count Card */}
@@ -124,8 +146,8 @@ export default function Home() {
                 <span className="block text-sm text-gray-600 mt-1">Часто изучаемые слова</span>
               </h2>
               <div className="space-y-2">
-                {stats?.wordStats &&
-                  stats.wordStats.slice(0, 5).map((word) => (
+                {stats?.wordStats && stats.wordStats.length > 0 ? (
+                  stats.wordStats.map((word) => (
                     <div key={word.korean} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded text-sm">
                       <span className="flex-1">
                         {word.korean} ({word.russian})
@@ -135,7 +157,10 @@ export default function Home() {
                         <span className="text-xs text-gray-500">회</span>
                       </div>
                     </div>
-                  ))}
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-2">학습 기록이 없습니다</div>
+                )}
               </div>
             </div>
           </div>

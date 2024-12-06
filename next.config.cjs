@@ -1,4 +1,3 @@
-// next.config.js
 if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
 }
@@ -22,6 +21,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  output: "standalone",
 };
 
 module.exports = nextConfig;
