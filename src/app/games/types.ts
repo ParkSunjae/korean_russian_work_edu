@@ -1,13 +1,8 @@
-import type { WordType } from "@/constants/words";
+import type { Word } from "@/types/prisma";
 
-export interface Word extends WordType {
+export interface GameWord extends Word {
   x: number;
   y: number;
-  id: number;
-  matched?: boolean;
-}
-
-export interface MatchedWordCount extends Word {
-  count: number;
-  totalScore: number;
+  matched: boolean;
+  speed: number;
 }

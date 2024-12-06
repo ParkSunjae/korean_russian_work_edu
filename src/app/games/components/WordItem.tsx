@@ -1,21 +1,30 @@
-import { memo } from "react";
-import { Word } from "../types";
+"use client";
 
-const WordItem = memo(({ word }: { word: Word }) => {
+import { memo } from "react";
+import type { GameWord } from "../types";
+
+interface WordItemProps {
+  word: GameWord;
+  onMatch?: (word: GameWord) => void;
+}
+
+const WordItem = memo(({ word, onMatch }: WordItemProps) => {
   return (
     <div
       className={`
-        absolute px-3 py-2 bg-white border rounded shadow
-        transition-all duration-200
+        absolute px-4 py-2 bg-white border rounded-lg shadow-md cursor-pointer
+        hover:bg-blue-50 transition-all duration-200
         ${word.matched ? "opacity-0 scale-110" : "opacity-100 scale-100"}
       `}
       style={{
         left: `${word.x}%`,
         top: `${word.y}%`,
-        transform: "translateX(-50%)",
+        transform: "translate(-50%, -50%)",
       }}
+      onClick={() => onMatch?.(word)}
     >
-      {word.korean}
+      <div className="text-lg font-medium">{word.korean}</div>
+      <div className="text-sm text-gray-500">{word.russian}</div>
     </div>
   );
 });
