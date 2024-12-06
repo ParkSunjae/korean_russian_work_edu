@@ -1,14 +1,8 @@
-import { MenuId } from "@/constants/menu";
+import type { MenuStats, Word } from "./prisma";
 
 export interface MenuStat {
   name: string;
   nameRu: string;
-  count: number;
-}
-
-export interface WordStat {
-  korean: string;
-  russian: string;
   count: number;
 }
 
@@ -20,7 +14,7 @@ export interface Statistics {
   totalVisits: number;
   lastUpdated: string;
   menuStats: Record<string, MenuStat>;
-  wordStats: WordStat[];
-  recentWords: WordStat[];
-  recentPhrases: WordStat[];
+  wordStats: Word[];
+  recentWords: Word[];
+  recentPhrases: Word[];
 }

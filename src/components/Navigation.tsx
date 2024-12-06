@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Home, Type, Languages, BookOpen, MessageSquare, Gamepad, Bell, Menu, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import MenuLink from "./MenuLink";
 
 const menuItems = [
   { href: "/", label: "홈", labelRu: "Главная", icon: Home, id: "home" },
@@ -16,33 +16,8 @@ const menuItems = [
   { href: "/suggestions", label: "건의사항", labelRu: "Предложения", icon: Bell, id: "suggestions" },
 ];
 
-const Navigation: React.FC = () => {
+export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
-
-  const handleMenuClick = async (menuId: string, href: string) => {
-    try {
-      await fetch("/api/statistics", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "menu",
-          data: {
-            id: menuId,
-            name: menuItems.find((item) => item.id === menuId)?.label || "",
-            nameRu: menuItems.find((item) => item.id === menuId)?.labelRu || "",
-          },
-        }),
-      });
-    } catch (error) {
-      console.error("메뉴 통계 업데이트 실패:", error);
-    }
-
-    router.push(href);
-    setIsOpen(false);
-  };
 
   return (
     <>
@@ -58,8 +33,10 @@ const Navigation: React.FC = () => {
         <ul className="space-y-4 p-4">
           {menuItems.map((item) => (
             <li key={item.href}>
-              <button
-                onClick={() => handleMenuClick(item.id, item.href)}
+              <MenuLink
+                href={item.href}
+                menuName={item.label}
+                menuNameRu={item.labelRu}
                 className="flex flex-col items-start gap-1 py-2 px-4 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-200 transition-colors w-full text-left"
               >
                 <div className="flex items-center gap-3">
@@ -67,13 +44,11 @@ const Navigation: React.FC = () => {
                   <span>{item.label}</span>
                 </div>
                 <span className="text-sm text-gray-500">{item.labelRu}</span>
-              </button>
+              </MenuLink>
             </li>
           ))}
         </ul>
       </nav>
     </>
   );
-};
-
-export default Navigation;
+}

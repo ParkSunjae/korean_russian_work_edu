@@ -8,43 +8,42 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
-model Dictionary {
-  id            String     @id @default(cuid())
-  korean        String     @unique
-  english       String?
+model Word {
+  id            String   @id @default(cuid())
+  korean        String   @unique
   russian       String
   pronunciation String?
-  definition    String?
-  definition_ru String?
   category      String?
-  difficulty    String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  examples      Example[]
-  stats         WordStats?
+  createdAt     DateTime @default(now())
+  listenCount   Int      @default(0)
 }
 
-model Statistics {
+model Sentence {
+  id            String   @id @default(cuid())
+  korean        String   @unique
+  russian       String
+  pronunciation String?
+  koreanDesc    String?
+  russianDesc   String?
+  category      String
+  difficulty    String?
+  listenCount   Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model VisitorStats {
   id          String   @id @default(cuid())
-  totalVisits Int      @default(0)
+  totalCount  Int      @default(0)
   lastUpdated DateTime @updatedAt
 }
 
-model MenuStats {
-  id          String   @id @default(cuid())
-  menuId      String   @unique
-  name        String
-  nameRu      String
-  count       Int      @default(0)
-  lastClicked DateTime @default(now())
-}
-
-model WordStats {
-  id            String     @id @default(cuid())
-  korean        String     @unique
-  count         Int        @default(0)
-  lastUsed      DateTime   @default(now())
-  dictionary    Dictionary @relation(fields: [korean], references: [korean])
+model Suggestion {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  author    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Notice {
@@ -55,26 +54,10 @@ model Notice {
   updatedAt DateTime @updatedAt
 }
 
-model GameRecord {
-  id        String   @id @default(cuid())
-  score     Int
-  level     Int
-  duration  Int
-  createdAt DateTime @default(now())
-}
-
-model Example {
-  id           Int        @id @default(autoincrement())
-  text         String
-  dictionaryId String
-  dictionary   Dictionary @relation(fields: [dictionaryId], references: [id])
-}
-
-model Suggestion {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model MenuStats {
+  id         String   @id @default(cuid())
+  menuName   String   @unique
+  menuNameRu String   // 러시아어 메뉴명 추가
+  clickCount Int      @default(0)
+  lastClicked DateTime @default(now())
 }

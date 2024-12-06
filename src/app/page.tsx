@@ -1,10 +1,11 @@
 "use client";
 
+import { NextResponse } from "next/server";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/layout/PageHeader";
 import type { Statistics } from "@/types/statistics";
-import type { Notice } from "@/types/notice";
+import type { Notice } from "@/types/prisma";
 
 export default function HomePage() {
   const router = useRouter();
@@ -153,7 +154,7 @@ export default function HomePage() {
                         {word.korean} ({word.russian})
                       </span>
                       <div className="flex items-center gap-1">
-                        <span className="text-gray-600">{word.count}</span>
+                        <span className="text-gray-600">{word.listenCount}</span>
                         <span className="text-xs text-gray-500">회</span>
                       </div>
                     </div>
