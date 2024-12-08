@@ -1,51 +1,48 @@
 import { NextResponse } from "next/server";
 import prisma from "@/libs/prisma";
-import { MenuId } from "@/constants/menu";
 import { cookies } from "next/headers";
 
 export async function GET() {
   try {
-    const [stats, menuStats, wordStats] = await Promise.all([
-      prisma.statistics.findFirst(),
-      prisma.menuStats.findMany(),
-      prisma.wordStats.findMany({
-        orderBy: { count: "desc" },
-        take: 10,
+    // 모든 통계 데이터를 한 번에 가져오기
+    const [visitorStats, menuStats, wordStats] = await Promise.all([
+      prisma.visitorStats.findFirst(),
+      prisma.menuStats.findMany({
+        orderBy: { clickCount: 'desc' }
       }),
+      prisma.word.findMany({
+        where: {
+          listenCount: {
+            gt: 0  // 최소 1회 이상 들은 단어만
+          }
+        },
+        orderBy: {
+          listenCount: 'desc'  // 많이 들은 순서대로
+        },
+        take: 10,  // 상위 10개만
+        select: {
+          korean: true,
+          russian: true,
+          listenCount: true
+        }
+      })
     ]);
 
-    // 기본값 설정
-    const defaultStats = {
-      totalVisits: 0,
-      lastUpdated: new Date().toISOString(),
-      menuStats: {},
-      wordStats: [],
-    };
-
-    // 메뉴 통계 변환
-    const formattedMenuStats = menuStats.reduce<Record<MenuId, any>>(
-      (acc, stat) => ({
-        ...acc,
-        [stat.menuId]: {
-          name: stat.name,
-          nameRu: stat.nameRu,
-          count: stat.count,
-          lastClicked: stat.lastClicked,
-        },
-      }),
-      {} as Record<MenuId, any>
-    );
-
     return NextResponse.json({
-      totalVisits: stats?.totalVisits || defaultStats.totalVisits,
-      lastUpdated: stats?.lastUpdated || defaultStats.lastUpdated,
-      menuStats: formattedMenuStats,
-      wordStats: wordStats.map((stat) => ({
-        korean: stat.korean,
-        russian: stat.russian,
-        pronunciation: stat.pronunciation,
-        count: stat.count,
+      totalVisits: visitorStats?.totalCount || 0,
+      lastUpdated: visitorStats?.lastUpdated || new Date(),
+      menuStats: menuStats.map(stat => ({
+        menuId: stat.menuName,
+        name: stat.menuName,
+        nameRu: stat.menuNameRu,
+        count: stat.clickCount,
+        lastClicked: stat.lastClicked
       })),
+      wordStats: wordStats.map(word => ({
+        korean: word.korean,
+        russian: word.russian,
+        listenCount: word.listenCount
+      }))
     });
   } catch (error) {
     console.error("Failed to fetch statistics:", error);
@@ -53,49 +50,47 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const visitId = cookieStore.get("visit_id")?.value;
 
     // 이미 방문 기록이 있으면 카운트하지 않음
     if (visitId) {
       return NextResponse.json({
         success: true,
-        message: "Already counted",
+        message: "Already counted"
       });
     }
 
-    // 기존 통계 가져오기
-    let stats = await prisma.statistics.findFirst();
+    // 방문자 통계 업데이트
+    let stats = await prisma.visitorStats.findFirst();
 
     if (!stats) {
-      stats = await prisma.statistics.create({
-        data: { totalVisits: 1 },
+      stats = await prisma.visitorStats.create({
+        data: { totalCount: 1 }
       });
     } else {
-      stats = await prisma.statistics.update({
+      stats = await prisma.visitorStats.update({
         where: { id: stats.id },
-        data: { totalVisits: stats.totalVisits + 1 },
+        data: { totalCount: { increment: 1 } }
       });
     }
 
+    // 24시간 유효한 쿠키 설정
     const response = NextResponse.json({ success: true, data: stats });
     response.cookies.set("visit_id", "1", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24시간
+      maxAge: 60 * 60 * 24 // 24시간
     });
 
     return response;
   } catch (error) {
-    console.error("Failed to update statistics:", error);
+    console.error("Failed to update visitor count:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update statistics",
-      },
+      { success: false, error: "Failed to update visitor count" },
       { status: 500 }
     );
   }

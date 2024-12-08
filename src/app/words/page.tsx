@@ -336,20 +336,17 @@ export default function WordsPage() {
 
     if (language === "ko") {
       try {
-        await fetch("/api/statistics", {
+        await fetch("/api/word-stats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            type: "word",
-            data: {
-              korean: word.korean,
-              russian: word.russian,
-              pronunciation: word.pronunciation,
-            },
-          }),
+            korean: word.korean,
+            russian: word.russian,
+            pronunciation: word.pronunciation
+          })
         });
       } catch (error) {
-        console.error("Error saving statistics:", error);
+        console.error("Failed to update word stats:", error);
       }
     }
   };

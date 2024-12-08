@@ -14,48 +14,35 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const controller = new AbortController();
-    let isMounted = true;
-
-    const fetchData = async () => {
+    const initializePage = async () => {
       try {
-        const [statsResponse, noticesResponse] = await Promise.all([
-          fetch("/api/statistics/summary", {
-            signal: controller.signal,
-          }),
-          fetch("/api/notices", {
-            signal: controller.signal,
-          }),
-        ]);
+        // 방문자 수 업데이트
+        await fetch('/api/statistics', {
+          method: 'POST',
+          credentials: 'include'
+        });
 
-        if (!statsResponse.ok || !noticesResponse.ok) {
-          throw new Error("Failed to fetch data");
+        // 통계 데이터 로드
+        const statsRes = await fetch("/api/statistics");
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData);
         }
 
-        const [statsData, noticesData] = await Promise.all([statsResponse.json(), noticesResponse.json()]);
-
-        if (!isMounted) return;
-
-        setStats(statsData);
-        setNotices(noticesData.slice(0, 3)); // 최근 3개만 표시
+        // 공지사항 로드
+        const noticesRes = await fetch("/api/notices");
+        if (noticesRes.ok) {
+          const noticesData = await noticesRes.json();
+          setNotices(noticesData.slice(0, 3));
+        }
       } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
-        console.error("Failed to fetch data:", error);
+        console.error("Error initializing page:", error);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
-    fetchData();
-
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
+    initializePage();
   }, []);
 
   if (isLoading) {
@@ -123,11 +110,10 @@ export default function HomePage() {
               </h2>
               <div className="space-y-2">
                 {stats?.menuStats &&
-                  Object.entries(stats.menuStats)
-                    .filter(([menuId]) => menuId !== "home")
-                    .sort(([, a], [, b]) => b.count - a.count)
-                    .map(([menuId, menuStat]) => (
-                      <div key={menuId} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded text-sm">
+                  stats.menuStats
+                    .filter(menuStat => menuStat.menuId !== "home")
+                    .map((menuStat) => (
+                      <div key={menuStat.menuId} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded text-sm">
                         <span className="flex-1">
                           {menuStat.name} / {menuStat.nameRu}
                         </span>

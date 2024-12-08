@@ -16,7 +16,7 @@ type GameType = {
 const GAMES: GameType[] = [
   {
     id: "falling-words",
-    title: "단어 떨어뜨리기",
+    title: "떨어지는 단어 맞추기",
     description: "떨어지는 단어를 음성으로 맞추는 게임입니다.",
     component: FallingWordsGame,
   },

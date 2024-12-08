@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 interface MenuLinkProps {
   href: string;
@@ -12,22 +13,31 @@ interface MenuLinkProps {
 }
 
 export default function MenuLink({ href, menuName, menuNameRu, children, className = "" }: MenuLinkProps) {
-  const updateMenuStats = useCallback(async () => {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
+  const updateMenuStats = async () => {
     try {
-      await fetch("/api/statistics/menu", {
+      await fetch("/api/menu-stats", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ menuName, menuNameRu }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          menuId: href.replace("/", "") || "home",
+          name: menuName,
+          nameRu: menuNameRu
+        })
       });
     } catch (error) {
-      console.error("Failed to update menu statistics:", error);
+      console.error("Failed to update menu stats:", error);
     }
-  }, [menuName, menuNameRu]);
+  };
 
   return (
-    <Link href={href} onClick={updateMenuStats} className={`block p-4 rounded-lg hover:bg-gray-50 transition-colors ${className}`}>
+    <Link
+      href={href}
+      onClick={updateMenuStats}
+      className={`${className} ${isActive ? "bg-indigo-50 text-indigo-600" : ""}`}
+    >
       {children}
     </Link>
   );
