@@ -58,10 +58,50 @@ export default function GameBoard({ words }: GameBoardProps) {
     setIsMicOn(false);
   }, []);
 
+  const handleWordMatch = useCallback(
+    (matchedWord: GameWord) => {
+      setGameWords((prev) => prev.map((word) => (word.id === matchedWord.id ? { ...word, matched: true } : word)));
+      setScore((prev) => prev + (difficulty === "easy" ? 5 : difficulty === "normal" ? 10 : 15));
+    },
+    [difficulty]
+  );
+
   const handleSpeechResult = useCallback((text: string) => {
     setRecognizedText(text);
-    // 여기에 음성 인식 결과와 게임 단어 매칭 로직 추가 가능
-  }, []);
+
+    // 음성 인식된 텍스트 전처리 (한글만 추출)
+    const cleanedText = text.trim()
+      .replace(/[^가-힣]/g, '')  // 한글이 아닌 문자 모두 제거
+      .toLowerCase();
+
+    if (!cleanedText) return;
+
+    // 현재 화면의 모든 단어와 매칭 시도
+    setGameWords(prev => {
+      let matched = false;
+      return prev.map(word => {
+        if (word.matched) return word;
+
+        // 게임 단어 전처리
+        const cleanedWord = word.korean.trim()
+          .replace(/[^가-힣]/g, '')
+          .toLowerCase();
+
+        // 매칭 조건 확인
+        const isExactMatch = cleanedText === cleanedWord;
+        const isPartialMatch = cleanedWord.includes(cleanedText) || 
+                              cleanedText.includes(cleanedWord);
+        const isMatch = isExactMatch || isPartialMatch;
+
+        if (isMatch && !matched) {
+          matched = true;
+          handleWordMatch(word);  // 점수 증가 등 처리
+          return { ...word, matched: true };
+        }
+        return word;
+      });
+    });
+  }, [handleWordMatch]);
 
   const { startListening, stopListening } = useSpeechRecognition({
     onResult: handleSpeechResult,
@@ -134,14 +174,6 @@ export default function GameBoard({ words }: GameBoardProps) {
   useEffect(() => {
     setLevel(Math.floor(score / 100) + 1);
   }, [score]);
-
-  const handleWordMatch = useCallback(
-    (matchedWord: GameWord) => {
-      setGameWords((prev) => prev.map((word) => (word.id === matchedWord.id ? { ...word, matched: true } : word)));
-      setScore((prev) => prev + (difficulty === "easy" ? 5 : difficulty === "normal" ? 10 : 15));
-    },
-    [difficulty]
-  );
 
   return (
     <div className="relative w-full h-[600px] bg-gray-100 rounded-lg overflow-hidden">
