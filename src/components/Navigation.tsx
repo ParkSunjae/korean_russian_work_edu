@@ -11,7 +11,7 @@ const menuItems = [
   { href: "/syllables", label: "자음+모음", labelRu: "Слоги", icon: BookOpen, id: "syllables" },
   { href: "/batchims", label: "받침", labelRu: "Батчим", icon: BookOpen, id: "batchims" },
   { href: "/words", label: "단어", labelRu: "Слова", icon: BookOpen, id: "words" },
-  { href: "/sentences", label: "문장", labelRu: "Предложения", icon: MessageSquare, id: "sentences" },
+  { href: "/exams", label: "시험", labelRu: "Экзамен", icon: MessageSquare, id: "exams" },
   { href: "/games", label: "게임", labelRu: "Игры", icon: Gamepad, id: "games" },
   { href: "/suggestions", label: "건의사항", labelRu: "Предложения", icon: Bell, id: "suggestions" },
 ];

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
 
 interface MenuLinkProps {
   href: string;
@@ -18,14 +17,13 @@ export default function MenuLink({ href, menuName, menuNameRu, children, classNa
 
   const updateMenuStats = async () => {
     try {
-      await fetch("/api/menu-stats", {
+      await fetch("/api/statistics/menu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          menuId: href.replace("/", "") || "home",
-          name: menuName,
-          nameRu: menuNameRu
-        })
+          menuName,
+          menuNameRu,
+        }),
       });
     } catch (error) {
       console.error("Failed to update menu stats:", error);
@@ -33,11 +31,7 @@ export default function MenuLink({ href, menuName, menuNameRu, children, classNa
   };
 
   return (
-    <Link
-      href={href}
-      onClick={updateMenuStats}
-      className={`${className} ${isActive ? "bg-indigo-50 text-indigo-600" : ""}`}
-    >
+    <Link href={href} onClick={updateMenuStats} className={`${className} ${isActive ? "bg-indigo-50 text-indigo-600" : ""}`}>
       {children}
     </Link>
   );
