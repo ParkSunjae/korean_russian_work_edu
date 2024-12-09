@@ -5,7 +5,8 @@ import PageHeader from "@/components/layout/PageHeader";
 
 const TOPIK_EXAMS = [
   {
-    id: "91_B",
+    id: "91B",
+    fileId: "91_B",
     name: "제91회 한국어능력시험 I B형",
     section: "듣기 통합 (1번 ~ 31번)",
     type: "listening",
@@ -25,10 +26,7 @@ export default function ExamsPage() {
           {TOPIK_EXAMS.map((exam) => (
             <button
               key={exam.id}
-              onClick={() => {
-                const formattedId = exam.id.replace("_", "");
-                router.push(`/exams/${formattedId}`);
-              }}
+              onClick={() => router.push(`/exams/${exam.id}`)}
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 text-left hover:shadow-md transition-shadow"
             >
               <h2 className="text-lg font-semibold text-gray-800 mb-2">{exam.name}</h2>

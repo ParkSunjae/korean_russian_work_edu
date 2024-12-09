@@ -38,19 +38,26 @@ export default function ExamPage() {
 
     const loadQuestions = async () => {
       try {
-        const response = await fetch(`/data/topik_questions_${examId}.json`);
+        const formattedExamId = examId.replace(/(\d+)([A-Z])/, "$1_$2");
+        const response = await fetch(`/data/topik_questions_${formattedExamId}.json`);
+
         if (!response.ok) {
           console.error(`HTTP error! status: ${response.status}`);
           throw new Error("Failed to fetch questions");
         }
 
         const data = await response.json();
-        if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
-          console.error("Invalid data structure:", data);
+        if (!data.questions || !Array.isArray(data.questions)) {
           throw new Error("Invalid questions data");
         }
 
         setTest(data);
+
+        const exampleResponse = await fetch(`/data/topik_example_${formattedExamId}.json`);
+        if (exampleResponse.ok) {
+          const exampleData = await exampleResponse.json();
+          setExamples(exampleData);
+        }
       } catch (error) {
         console.error("Failed to load questions:", error);
         router.push("/exams");
@@ -63,22 +70,6 @@ export default function ExamPage() {
       loadQuestions();
     }
   }, [examId, router]);
-
-  useEffect(() => {
-    const loadExamples = async () => {
-      try {
-        const response = await fetch("/data/topik_example_91_B.json");
-        if (!response.ok) throw new Error("Failed to fetch examples");
-
-        const data = await response.json();
-        setExamples(data);
-      } catch (error) {
-        console.error("Failed to load examples:", error);
-      }
-    };
-
-    loadExamples();
-  }, []);
 
   // 시험 시작 시간 설정
   useEffect(() => {
