@@ -1,10 +1,10 @@
 import type { MenuStats, Word } from "./prisma";
 
 export interface MenuStat {
-  menuId: string;
   name: string;
-  nameRu: string;
-  count: number;
+  menuName: string;
+  menuNameRu: string;
+  clickCount: number;
   lastClicked: string;
 }
 
@@ -17,6 +17,6 @@ export interface WordStat {
 export interface Statistics {
   totalVisits: number;
   lastUpdated: string;
-  menuStats: MenuStat[];
+  menuStats: Record<string, MenuStat>;
   wordStats: WordStat[];
 }

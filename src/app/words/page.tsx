@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Search, Volume2 } from "lucide-react";
+import { ArrowLeft, Search, Volume, Volume2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DictionaryEntry } from "@/types/dictionary";
 import PageHeader from "@/components/layout/PageHeader";
@@ -178,6 +178,38 @@ const ROMANIZATION: {
     ㅎ: "t",
   },
 };
+
+// 단어 카드 컴포넌트
+const WordCard = ({ word, onPlayPronunciation }: { word: DictionaryEntry; onPlayPronunciation: (word: DictionaryEntry, lang: "ko" | "ru") => void }) => {
+  return (
+    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      {word.category && (
+        <div className="mb-2">
+          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">{word.category}</span>
+          {word.subcategory && <span className="ml-2 text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded">{word.subcategory}</span>}
+        </div>
+      )}
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">{word.korean}</h3>
+          <p className="text-sm text-gray-600">{word.russian}</p>
+          {word.pronunciation && <p className="text-xs text-gray-500 mt-1">[{word.pronunciation}]</p>}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => onPlayPronunciation(word, "ko")} className="text-blue-600 hover:text-blue-800" title="한국어 발음">
+            <Volume className="w-5 h-5" />
+          </button>
+          <button onClick={() => onPlayPronunciation(word, "ru")} className="text-blue-600 hover:text-blue-800" title="러시아어 발음">
+            <Volume2 className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ITEMS_PER_PAGE_OPTIONS = [10, 20, 30, 50, 100];
+
 export default function WordsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -185,12 +217,16 @@ export default function WordsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const itemsPerPage = 30;
+  const [itemsPerPage, setItemsPerPage] = useState(30);
+  const [message, setMessage] = useState("");
+  const [categories, setCategories] = useState<{ [key: string]: string[] }>({});
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
 
-  const loadWords = useCallback(async (page: number, search: string = "") => {
+  const loadWords = useCallback(async (page: number, search: string = "", category: string = "", subcategory: string = "") => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/dictionary?page=${page}&limit=${itemsPerPage}&search=${search}`);
+      const response = await fetch(`/api/dictionary?page=${page}&limit=${itemsPerPage}&search=${search}&category=${category}&subcategory=${subcategory}`);
       if (!response.ok) {
         throw new Error("Failed to fetch dictionary");
       }
@@ -207,8 +243,8 @@ export default function WordsPage() {
   }, []);
 
   useEffect(() => {
-    loadWords(currentPage);
-  }, [currentPage, loadWords]);
+    loadWords(currentPage, searchTerm, selectedCategory, selectedSubcategory);
+  }, [currentPage, loadWords, searchTerm, selectedCategory, selectedSubcategory]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
@@ -249,74 +285,8 @@ export default function WordsPage() {
   }
   // 검색 버튼 클릭 시 검색 실행
   const handleSearchClick = async () => {
-    if (!searchTerm) return;
-    setIsLoading(true);
-
-    try {
-      // 1. 기존 단어 검색
-      const normalizedSearch = searchTerm.trim().toLowerCase();
-      const searchResponse = await fetch(`/api/dictionary?search=${normalizedSearch}`);
-
-      if (!searchResponse.ok) {
-        throw new Error("Failed to search dictionary");
-      }
-
-      const searchData = await searchResponse.json();
-
-      // 검색 결과가 있으면 표시
-      if (searchData.words && searchData.words.length > 0) {
-        setWords(searchData.words);
-        setTotalPages(searchData.pagination?.totalPages || 1);
-        setIsLoading(false);
-        return;
-      }
-
-      // 2. 검색 결과가 없는 경우 새 단어 생성 시도
-      const translateResponse = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ korean: normalizedSearch }),
-      });
-
-      const translateData = await translateResponse.json();
-
-      if (!translateData.success) {
-        throw new Error(translateData.error || "Translation failed");
-      }
-
-      // 3. 단어 생성 시도
-      const createResponse = await fetch("/api/dictionary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          korean: normalizedSearch,
-          russian: translateData.russian,
-          pronunciation: koreanToEnglish(normalizedSearch),
-        }),
-      });
-
-      const result = await createResponse.json();
-
-      if (result.success) {
-        setWords([result.data]);
-        setTotalPages(1);
-      } else {
-        // 이미 존재하는 단어인 경우
-        if (result.error === "Word already exists" && result.data) {
-          setWords([result.data]);
-          setTotalPages(1);
-        } else {
-          throw new Error(result.error || "Failed to create word");
-        }
-      }
-    } catch (error) {
-      console.error("Error during search/create:", error);
-      alert(error instanceof Error ? error.message : "처리 중 오류가 발생했습니다.");
-      setWords([]);
-      setTotalPages(0);
-    } finally {
-      setIsLoading(false);
-    }
+    setCurrentPage(1);
+    loadWords(1, searchTerm, selectedCategory, selectedSubcategory);
   };
 
   // Enter 키로 검색 실행
@@ -342,8 +312,8 @@ export default function WordsPage() {
           body: JSON.stringify({
             korean: word.korean,
             russian: word.russian,
-            pronunciation: word.pronunciation
-          })
+            pronunciation: word.pronunciation,
+          }),
         });
       } catch (error) {
         console.error("Failed to update word stats:", error);
@@ -355,13 +325,100 @@ export default function WordsPage() {
   const handleReset = () => {
     setSearchTerm("");
     setCurrentPage(1);
-    loadWords(1, "");
+    loadWords(1, "", selectedCategory, selectedSubcategory);
+  };
+
+  const handleInitializeWords = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/words", {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(`성공: ${data.addedCount}개 추가, ${data.updatedCount}개 업데이트됨`);
+      } else {
+        setMessage(`오류: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error initializing words:", error);
+      setMessage("단어 초기화 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 카테고리 데이터 로드
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch("/api/words/categories");
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // 페이지 번호 생성
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      // 전체 페이지가 5페이지 이하인 경우
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // 전체 페이지가 5페이지 초과인 경우
+      if (currentPage <= 3) {
+        // 현재 페이지가 앞쪽인 경우
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push("...");
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // 현재 페이지가 뒤쪽인 경우
+        pageNumbers.push(1);
+        pageNumbers.push("...");
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        // 현재 페이지가 중간인 경우
+        pageNumbers.push(1);
+        pageNumbers.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push("...");
+        pageNumbers.push(totalPages);
+      }
+    }
+    return pageNumbers;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <PageHeader title="단어 목록" />
+        <div className="flex justify-between items-center mb-6">
+          <PageHeader title="단어 목록" />
+          {/* <button
+            onClick={handleInitializeWords}
+            disabled={isLoading}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+          >
+            {isLoading ? "처리 중..." : "TOPIK I 단어 초기화"}
+          </button> */}
+        </div>
+
+        {message && <div className={`mb-4 p-3 rounded ${message.includes("오류") ? "bg-red-100" : "bg-green-100"}`}>{message}</div>}
+
         {/* 검색 섹션 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row gap-2">
@@ -373,37 +430,39 @@ export default function WordsPage() {
               placeholder="단어 검색 / Поиск слов"
               className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
             />
-            <div className="flex gap-2 shrink-0">
-              <button
-                onClick={handleSearchClick}
-                disabled={isLoading || !searchTerm}
-                className="w-full sm:w-24 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
-              >
-                <Search className="w-4 h-4" />
-                <span>검색</span>
-              </button>
-              <button
-                onClick={handleReset}
-                className="w-full sm:w-24 px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 3v5h5" />
-                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                  <path d="M16 21h5v-5" />
-                </svg>
-                <span>초기화</span>
-              </button>
-            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2 mt-2">
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setSelectedSubcategory("");
+              }}
+              className="w-full sm:w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">모든 카테고리 / Все категории</option>
+              {Object.keys(categories).map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedSubcategory}
+              onChange={(e) => setSelectedSubcategory(e.target.value)}
+              disabled={!selectedCategory}
+              className="w-full sm:w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+            >
+              <option value="">모든 하위 카테고리 / Все подкатегории</option>
+              {selectedCategory &&
+                categories[selectedCategory]?.map((subcategory) => (
+                  <option key={subcategory} value={subcategory}>
+                    {subcategory}
+                  </option>
+                ))}
+            </select>
           </div>
         </div>
 
@@ -413,29 +472,7 @@ export default function WordsPage() {
             {isLoading ? (
               <div className="col-span-full text-center py-6 sm:py-8">로딩 중...</div>
             ) : words.length > 0 ? (
-              words.map((word) => (
-                <div key={word.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
-                  <div className="p-3 sm:p-4">
-                    <div className="flex justify-between items-start mb-2 sm:mb-3">
-                      <div className="text-lg sm:text-xl font-bold text-indigo-600">{word.korean}</div>
-                      <div className="flex gap-1.5 sm:gap-2">
-                        <button onClick={() => handlePlayPronunciation(word, "ko")} className="p-1 sm:p-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100">
-                          <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                        <span className="text-sm sm:text-base text-gray-900">{word.russian}</span>
-                        <button onClick={() => handlePlayPronunciation(word, "ru")} className="p-1 sm:p-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100">
-                          <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
-                        </button>
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-500">{word.pronunciation}</div>
-                    </div>
-                  </div>
-                </div>
-              ))
+              words.map((word) => <WordCard key={word.id} word={word} onPlayPronunciation={handlePlayPronunciation} />)
             ) : (
               <div className="col-span-full text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base">검색 결과가 없습니다 / Результаты не найдены</div>
             )}
@@ -443,22 +480,57 @@ export default function WordsPage() {
 
           {/* 페이지네이션 */}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-1.5 sm:gap-2 mt-6 sm:mt-8">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-lg bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white"
+            <div className="flex justify-between items-center mt-6 sm:mt-8">
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                  loadWords(1, searchTerm, selectedCategory, selectedSubcategory);
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                이전
-              </button>
-              {/* ... 페이지 번호 버튼들은 동일하게 유지 ... */}
-              <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-lg bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white"
-              >
-                다음
-              </button>
+                {ITEMS_PER_PAGE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}개씩 보기
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex gap-1.5 sm:gap-2">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-lg bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white"
+                >
+                  이전
+                </button>
+
+                {getPageNumbers().map((pageNum, index) => (
+                  <button
+                    key={index}
+                    onClick={() => typeof pageNum === "number" && setCurrentPage(pageNum)}
+                    disabled={pageNum === "..."}
+                    className={`px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-lg ${
+                      pageNum === currentPage
+                        ? "bg-blue-600 text-white"
+                        : pageNum === "..."
+                        ? "bg-white text-gray-400"
+                        : "bg-white text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-lg bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white"
+                >
+                  다음
+                </button>
+              </div>
             </div>
           )}
         </div>

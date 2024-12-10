@@ -9,13 +9,18 @@ datasource db {
 }
 
 model Word {
-  id            String   @id @default(cuid())
-  korean        String   @unique
+  id            String      @id @default(cuid())
+  korean        String      
   russian       String
   pronunciation String?
   category      String?
-  createdAt     DateTime @default(now())
-  listenCount   Int      @default(0)
+  subcategory   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  listenCount   Int         @default(0)
+  stats         WordStats[]
+
+  @@unique([korean, russian])
 }
 
 model Sentence {
@@ -51,13 +56,26 @@ model Notice {
   title     String
   content   String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model MenuStats {
-  id         String   @id @default(cuid())
-  menuName   String   @unique
-  menuNameRu String   // 러시아어 메뉴명 추가
-  clickCount Int      @default(0)
+  id          String   @id @default(cuid())
+  name        String   @unique
+  menuName    String   
+  menuNameRu  String   
+  clickCount  Int      @default(0)
   lastClicked DateTime @default(now())
+}
+
+model WordStats {
+  id        String   @id @default(cuid())
+  word      Word     @relation(fields: [wordId], references: [id])
+  wordId    String
+  count     Int      @default(0)
+  lastUsed  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([wordId])
 }

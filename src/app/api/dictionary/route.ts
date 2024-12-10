@@ -1,48 +1,51 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/libs/prisma";
-import type { Word } from "@/types/prisma";
-
-export const dynamic = "force-dynamic";
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "50");
+  const search = searchParams.get("search") || "";
+  const category = searchParams.get("category") || "";
+  const subcategory = searchParams.get("subcategory") || "";
+
+  const skip = (page - 1) * limit;
+
   try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
-    const search = searchParams.get("search") || "";
-    const exact = searchParams.get("exact") === "true";
+    const whereCondition: Prisma.WordWhereInput = {
+      AND: [
+        search
+          ? {
+              OR: [{ korean: { contains: search } }, { russian: { contains: search } }],
+            }
+          : {},
+        category ? { category } : {},
+        subcategory ? { subcategory } : {},
+      ].filter(Boolean),
+    };
 
-    const skip = (page - 1) * limit;
+    const total = await prisma.word.count({ where: whereCondition });
+    const totalPages = Math.ceil(total / limit);
 
-    // 한글 단어만 검색 (정확한 검색 또는 부분 검색)
-    const whereCondition = exact ? { korean: search } : { korean: { contains: search, mode: "insensitive" } };
-
-    const [total, words] = await Promise.all([
-      prisma.word.count({ where: whereCondition }),
-      prisma.word.findMany({
-        where: whereCondition,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-    ]);
-
-    // 정확한 검색에서 결과가 없는 경우 새로운 단어 생성 가능 여부 반환
-    const canCreate = exact && total === 0;
+    const words = await prisma.word.findMany({
+      where: whereCondition,
+      take: limit,
+      skip,
+      orderBy: [{ category: "asc" }, { korean: "asc" }],
+    });
 
     return NextResponse.json({
-      success: true,
       words,
-      canCreate,
       pagination: {
         currentPage: page,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
         totalItems: total,
       },
     });
   } catch (error) {
-    console.error("Dictionary API error:", error);
-    return NextResponse.json({ success: false, error: "Failed to fetch words" }, { status: 500 });
+    console.error("Error fetching dictionary:", error);
+    return NextResponse.json({ error: "단어 조회 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
 

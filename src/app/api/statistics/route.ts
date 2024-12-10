@@ -1,97 +1,62 @@
 import { NextResponse } from "next/server";
-import prisma from "@/libs/prisma";
-import { cookies } from "next/headers";
+import { prisma } from "@/libs/prisma";
 
 export async function GET() {
   try {
-    // 모든 통계 데이터를 한 번에 가져오기
-    const [visitorStats, menuStats, wordStats] = await Promise.all([
-      prisma.visitorStats.findFirst(),
-      prisma.menuStats.findMany({
-        orderBy: { clickCount: 'desc' }
-      }),
-      prisma.word.findMany({
-        where: {
-          listenCount: {
-            gt: 0  // 최소 1회 이상 들은 단어만
-          }
-        },
-        orderBy: {
-          listenCount: 'desc'  // 많이 들은 순서대로
-        },
-        take: 10,  // 상위 10개만
-        select: {
-          korean: true,
-          russian: true,
-          listenCount: true
-        }
-      })
-    ]);
+    // 방문자 통계
+    const visitorStats = await prisma.visitorStats.findFirst();
+
+    // 메뉴 통계
+    const menuStats = await prisma.menuStats.findMany({
+      orderBy: {
+        clickCount: "desc",
+      },
+    });
+
+    // 단어 통계
+    const wordStats = await prisma.word.findMany({
+      take: 5,
+      orderBy: {
+        listenCount: "desc",
+      },
+      select: {
+        korean: true,
+        russian: true,
+        listenCount: true,
+      },
+    });
 
     return NextResponse.json({
-      totalVisits: visitorStats?.totalCount || 0,
-      lastUpdated: visitorStats?.lastUpdated || new Date(),
-      menuStats: menuStats.map(stat => ({
-        menuId: stat.menuName,
-        name: stat.menuName,
-        nameRu: stat.menuNameRu,
-        count: stat.clickCount,
-        lastClicked: stat.lastClicked
-      })),
-      wordStats: wordStats.map(word => ({
-        korean: word.korean,
-        russian: word.russian,
-        listenCount: word.listenCount
-      }))
+      visitorStats: visitorStats || { totalCount: 0 },
+      menuStats,
+      wordStats,
     });
   } catch (error) {
-    console.error("Failed to fetch statistics:", error);
-    return NextResponse.json({ error: "Failed to fetch statistics" }, { status: 500 });
+    console.error("Error fetching statistics:", error);
+    return NextResponse.json({ error: "통계 조회 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
 
 export async function POST() {
   try {
-    const cookieStore = cookies();
-    const visitId = cookieStore.get("visit_id")?.value;
-
-    // 이미 방문 기록이 있으면 카운트하지 않음
-    if (visitId) {
-      return NextResponse.json({
-        success: true,
-        message: "Already counted"
-      });
-    }
-
-    // 방문자 통계 업데이트
-    let stats = await prisma.visitorStats.findFirst();
-
-    if (!stats) {
-      stats = await prisma.visitorStats.create({
-        data: { totalCount: 1 }
-      });
-    } else {
-      stats = await prisma.visitorStats.update({
-        where: { id: stats.id },
-        data: { totalCount: { increment: 1 } }
-      });
-    }
-
-    // 24시간 유효한 쿠키 설정
-    const response = NextResponse.json({ success: true, data: stats });
-    response.cookies.set("visit_id", "1", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 // 24시간
+    const stats = await prisma.visitorStats.upsert({
+      where: {
+        id: "total", // 고정된 ID 사용
+      },
+      update: {
+        totalCount: {
+          increment: 1,
+        },
+      },
+      create: {
+        id: "total",
+        totalCount: 1,
+      },
     });
 
-    return response;
+    return NextResponse.json(stats);
   } catch (error) {
-    console.error("Failed to update visitor count:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to update visitor count" },
-      { status: 500 }
-    );
+    console.error("Error updating visitor stats:", error);
+    return NextResponse.json({ error: "방문자 통계 업데이트 중 오류가 발생했습니다." }, { status: 500 });
   }
 }

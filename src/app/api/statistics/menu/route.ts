@@ -3,24 +3,40 @@ import { prisma } from "@/libs/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { menuName, menuNameRu } = await request.json();
+    const { menuId, menuName, menuNameRu } = await request.json();
 
-    if (!menuName || !menuNameRu) {
-      return NextResponse.json({ error: "Menu name and Russian name are required" }, { status: 400 });
+    if (!menuId || !menuName || !menuNameRu) {
+      return NextResponse.json({ error: "Required fields are missing" }, { status: 400 });
     }
 
-    const menuStat = await prisma.menuStats.upsert({
-      where: { menuName },
-      update: {
-        clickCount: { increment: 1 },
-        lastClicked: new Date(),
-      },
-      create: {
-        menuName,
-        menuNameRu,
-        clickCount: 1,
-      },
+    // 기존 메뉴 통계 찾기
+    const existingStat = await prisma.menuStats.findUnique({
+      where: { name: menuId },
     });
+
+    let menuStat;
+    if (existingStat) {
+      // 기존 통계 업데이트
+      menuStat = await prisma.menuStats.update({
+        where: { id: existingStat.id },
+        data: {
+          clickCount: { increment: 1 },
+          lastClicked: new Date(),
+          menuName: menuName,
+          menuNameRu: menuNameRu,
+        },
+      });
+    } else {
+      // 새 통계 생성
+      menuStat = await prisma.menuStats.create({
+        data: {
+          name: menuId,
+          menuName: menuName,
+          menuNameRu: menuNameRu,
+          clickCount: 1,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true, data: menuStat });
   } catch (error) {

@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/libs/prisma";
-import type { Suggestion } from "@/types/prisma";
-
-export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +10,7 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
+    // DB에서 건의사항 조회
     const [total, suggestions] = await Promise.all([
       prisma.suggestion.count({
         where: {
@@ -40,8 +38,8 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Suggestion API error:", error);
-    return NextResponse.json({ error: "Failed to fetch suggestions" }, { status: 500 });
+    console.error("Failed to fetch suggestions:", error);
+    return NextResponse.json({ error: "건의사항을 불러오는데 실패했습니다." }, { status: 500 });
   }
 }
 
@@ -51,7 +49,7 @@ export async function POST(request: Request) {
     const { title, content, author } = body;
 
     if (!title || !content || !author) {
-      return NextResponse.json({ success: false, error: "Title, content and author are required" }, { status: 400 });
+      return NextResponse.json({ error: "제목, 내용, 작성자는 필수 입력사항입니다." }, { status: 400 });
     }
 
     const suggestion = await prisma.suggestion.create({
@@ -67,7 +65,7 @@ export async function POST(request: Request) {
       data: suggestion,
     });
   } catch (error) {
-    console.error("Suggestion API error:", error);
-    return NextResponse.json({ success: false, error: "Failed to create suggestion" }, { status: 500 });
+    console.error("Failed to create suggestion:", error);
+    return NextResponse.json({ error: "건의사항 등록에 실패했습니다." }, { status: 500 });
   }
 }

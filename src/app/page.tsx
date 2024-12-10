@@ -1,36 +1,154 @@
 "use client";
 
 import { NextResponse } from "next/server";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/layout/PageHeader";
 import type { Statistics } from "@/types/statistics";
 import type { Notice } from "@/types/prisma";
+import { ChevronDown, ChevronRight } from "lucide-react";
+
+const MENU_ITEMS = [
+  {
+    id: "exams",
+    name: "TOPIK 시험",
+    nameRu: "TOPIK ТЕСТ",
+    description: "모의고사를 풀어보세요",
+    descriptionRu: "Решайте пробные тесты",
+    href: "/exams",
+  },
+  {
+    id: "games",
+    name: "학습 게임",
+    nameRu: "Обучающие игры",
+    description: "게임으로 한국어를 배워보세요",
+    descriptionRu: "Изучайте корейский через игры",
+    href: "/games",
+  },
+  {
+    id: "suggestions",
+    name: "건의사항",
+    nameRu: "Предложения",
+    description: "개선사항을 제안해주세요",
+    descriptionRu: "Предложите улучшения",
+    href: "/suggestions",
+  },
+];
+
+interface NoticeRowProps {
+  notice: Notice;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+const NoticeRow = ({ notice, isExpanded, onToggle }: NoticeRowProps) => {
+  const formatContent = (content: string) => {
+    try {
+      const formattedContent = content.split("\\n\\n").join("\n").split("\\n").join("\n");
+
+      return formattedContent
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .map((line, index) => {
+          // 제목 처리
+          if (line.startsWith("# ")) {
+            return (
+              <h1 key={index} className="text-2xl font-bold mb-4">
+                {line.replace("# ", "")}
+              </h1>
+            );
+          }
+          if (line.startsWith("## ")) {
+            return (
+              <h2 key={index} className="text-xl font-bold mt-6 mb-3">
+                {line.replace("## ", "")}
+              </h2>
+            );
+          }
+          if (line.startsWith("### ")) {
+            return (
+              <h3 key={index} className="text-lg font-bold mt-4 mb-2">
+                {line.replace("### ", "")}
+              </h3>
+            );
+          }
+
+          // 목록 처리
+          if (line.startsWith("- ")) {
+            return (
+              <li key={index} className="ml-4 mb-1">
+                {line.replace("- ", "")}
+              </li>
+            );
+          }
+
+          // 구분선 처리
+          if (line.startsWith("---")) {
+            return <hr key={index} className="my-6 border-t border-gray-300" />;
+          }
+
+          // 일반 텍스트
+          return (
+            <p key={index} className="mb-2">
+              {line}
+            </p>
+          );
+        });
+    } catch (error) {
+      console.error("Error formatting content:", error);
+      return <p className="text-gray-800">내용을 표시할 수 없습니다.</p>;
+    }
+  };
+
+  return (
+    <>
+      <tr className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={onToggle}>
+        <td className="border-b px-4 py-3">
+          <div className="flex items-center gap-2">
+            {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+            <span className="font-medium">{notice.title}</span>
+          </div>
+        </td>
+        <td className="border-b px-4 py-3 text-gray-500 text-sm">{new Date(notice.createdAt).toLocaleDateString()}</td>
+      </tr>
+      {isExpanded && (
+        <tr>
+          <td colSpan={2} className="border-b bg-gray-50">
+            <div className="px-6 py-4">
+              <div className="bg-white rounded-lg p-6 shadow-sm prose max-w-none">{formatContent(notice.content)}</div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};
 
 export default function HomePage() {
   const router = useRouter();
   const [stats, setStats] = useState<Statistics | null>(null);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
 
   useEffect(() => {
     const initializePage = async () => {
       try {
         // 방문자 수 업데이트
-        await fetch('/api/statistics', {
-          method: 'POST',
-          credentials: 'include'
+        await fetch("/api/statistics", {
+          method: "POST",
+          credentials: "include",
         });
 
         // 통계 데이터 로드
-        const statsRes = await fetch("/api/statistics");
+        const [statsRes, noticesRes] = await Promise.all([fetch("/api/statistics"), fetch("/api/notices")]);
+
         if (statsRes.ok) {
           const statsData = await statsRes.json();
           setStats(statsData);
         }
 
-        // 공지사항 로드
-        const noticesRes = await fetch("/api/notices");
         if (noticesRes.ok) {
           const noticesData = await noticesRes.json();
           setNotices(noticesData.slice(0, 3));
@@ -46,7 +164,14 @@ export default function HomePage() {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-2">로딩 중...</div>
+          <div className="text-gray-600">Загрузка...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -67,23 +192,35 @@ export default function HomePage() {
         {/* Recent Notices Section */}
         <section className="w-full max-w-4xl mx-auto mb-8">
           <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
-            <h2 className="text-lg md:text-xl font-bold mb-4">최근 공지사항 / Последние объявления</h2>
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr>
-                  <th className="py-2">제목</th>
-                  <th className="py-2">날짜</th>
-                </tr>
-              </thead>
-              <tbody>
-                {notices.map((notice) => (
-                  <tr key={notice.id}>
-                    <td className="border px-4 py-2">{notice.title}</td>
-                    <td className="border px-4 py-2">{new Date(notice.createdAt).toLocaleDateString()}</td>
+            <h2 className="text-lg md:text-xl font-bold mb-4">공지사항 / Объявления</h2>
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">제목 / Заголовок</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-32">날짜 / Дата</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {notices.length > 0 ? (
+                    notices.map((notice) => (
+                      <NoticeRow
+                        key={notice.id}
+                        notice={notice}
+                        isExpanded={expandedNoticeId === notice.id}
+                        onToggle={() => setExpandedNoticeId(expandedNoticeId === notice.id ? null : notice.id)}
+                      />
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={2} className="px-4 py-3 text-center text-gray-500">
+                        공지사항이 없습니다 / Нет объявлений
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
@@ -110,15 +247,15 @@ export default function HomePage() {
               </h2>
               <div className="space-y-2">
                 {stats?.menuStats &&
-                  stats.menuStats
-                    .filter(menuStat => menuStat.menuId !== "home")
+                  Object.values(stats.menuStats)
+                    .filter((menuStat) => menuStat.name !== "home")
                     .map((menuStat) => (
-                      <div key={menuStat.menuId} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded text-sm">
+                      <div key={menuStat.name} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded text-sm">
                         <span className="flex-1">
-                          {menuStat.name} / {menuStat.nameRu}
+                          {menuStat.menuName} / {menuStat.menuNameRu}
                         </span>
                         <div className="flex items-center gap-1">
-                          <span className="text-gray-600">{menuStat.count}</span>
+                          <span className="text-gray-600">{menuStat.clickCount}</span>
                           <span className="text-xs text-gray-500">회</span>
                         </div>
                       </div>

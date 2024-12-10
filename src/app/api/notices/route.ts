@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import prisma from "@/libs/prisma";
+import { prisma } from "@/libs/prisma";
 
 export async function GET() {
   try {
     const notices = await prisma.notice.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
+
     return NextResponse.json(notices);
   } catch (error) {
-    console.error("Failed to fetch notices:", error);
-    return NextResponse.json({ error: "Failed to fetch notices" }, { status: 500 });
+    console.error("Error fetching notices:", error);
+    return NextResponse.json({ error: "공지사항을 불러오는데 실패했습니다." }, { status: 500 });
   }
 }
 

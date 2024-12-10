@@ -1,0 +1,1246 @@
+{
+  "categories": [
+    {
+      "id": "people",
+      "name": "인물/관계",
+      "subcategories": [
+        {
+          "id": "family",
+          "name": "가족",
+          "words": [
+            {
+              "korean": "가족",
+              "russian": "семья",
+              "pronunciation": "gajok"
+            },
+            {
+              "korean": "부모님",
+              "russian": "родители",
+              "pronunciation": "bumonim"
+            },
+            {
+              "korean": "아버지",
+              "russian": "отец",
+              "pronunciation": "abeoji"
+            },
+            {
+              "korean": "아빠",
+              "russian": "папа",
+              "pronunciation": "appa"
+            },
+            {
+              "korean": "어머니",
+              "russian": "мать",
+              "pronunciation": "eomeoni"
+            },
+            {
+              "korean": "엄마",
+              "russian": "мама",
+              "pronunciation": "eomma"
+            },
+            {
+              "korean": "할아버지",
+              "russian": "дедушка",
+              "pronunciation": "harabeoji"
+            },
+            {
+              "korean": "할머니",
+              "russian": "бабушка",
+              "pronunciation": "halmeoni"
+            },
+            {
+              "korean": "남편",
+              "russian": "муж",
+              "pronunciation": "namphyeon"
+            },
+            {
+              "korean": "아내",
+              "russian": "жена",
+              "pronunciation": "anae"
+            },
+            {
+              "korean": "형",
+              "russian": "старший брат (для мужчин)",
+              "pronunciation": "hyeong"
+            },
+            {
+              "korean": "오빠",
+              "russian": "старший брат (для женщин)",
+              "pronunciation": "oppa"
+            },
+            {
+              "korean": "누나",
+              "russian": "старшая сестра (для мужчин)",
+              "pronunciation": "nuna"
+            },
+            {
+              "korean": "언니",
+              "russian": "старшая сестра (для женщин)",
+              "pronunciation": "eonni"
+            },
+            {
+              "korean": "동생",
+              "russian": "младший брат/сестра",
+              "pronunciation": "dongsaeng"
+            },
+            {
+              "korean": "아들",
+              "russian": "сын",
+              "pronunciation": "adeul"
+            },
+            {
+              "korean": "딸",
+              "russian": "дочь",
+              "pronunciation": "ttal"
+            }
+          ]
+        },
+        {
+          "id": "relations",
+          "name": "일반 관계",
+          "words": [
+            {
+              "korean": "친구",
+              "russian": "друг",
+              "pronunciation": "chingu"
+            },
+            {
+              "korean": "선생님",
+              "russian": "учитель",
+              "pronunciation": "seonsaengnim"
+            },
+            {
+              "korean": "학생",
+              "russian": "студент/ученик",
+              "pronunciation": "haksaeng"
+            },
+            {
+              "korean": "직원",
+              "russian": "сотрудник",
+              "pronunciation": "jigwon"
+            },
+            {
+              "korean": "손님",
+              "russian": "гость/клиент",
+              "pronunciation": "sonnim"
+            },
+            {
+              "korean": "이웃",
+              "russian": "сосед",
+              "pronunciation": "iut"
+            },
+            {
+              "korean": "사장님",
+              "russian": "директор/начальник",
+              "pronunciation": "sajangnim"
+            },
+            {
+              "korean": "의사",
+              "russian": "врач",
+              "pronunciation": "uisa"
+            },
+            {
+              "korean": "간호사",
+              "russian": "медсестра",
+              "pronunciation": "ganhosa"
+            },
+            {
+              "korean": "점원",
+              "russian": "продавец",
+              "pronunciation": "jeomwon"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "places",
+      "name": "장소",
+      "subcategories": [
+        {
+          "id": "buildings",
+          "name": "건물/시설",
+          "words": [
+            {
+              "korean": "집",
+              "russian": "дом",
+              "pronunciation": "jip"
+            },
+            {
+              "korean": "학교",
+              "russian": "школа",
+              "pronunciation": "hakgyo"
+            },
+            {
+              "korean": "회사",
+              "russian": "компания/фирма",
+              "pronunciation": "hoesa"
+            },
+            {
+              "korean": "식당",
+              "russian": "ресторан",
+              "pronunciation": "sikdang"
+            },
+            {
+              "korean": "병원",
+              "russian": "больница",
+              "pronunciation": "byeongwon"
+            },
+            {
+              "korean": "은행",
+              "russian": "банк",
+              "pronunciation": "eunhaeng"
+            },
+            {
+              "korean": "우체국",
+              "russian": "почта",
+              "pronunciation": "uchegeuk"
+            },
+            {
+              "korean": "도서관",
+              "russian": "библиотека",
+              "pronunciation": "doseogwan"
+            },
+            {
+              "korean": "백화점",
+              "russian": "универмаг",
+              "pronunciation": "baekhwajeom"
+            },
+            {
+              "korean": "마트",
+              "russian": "супермаркет",
+              "pronunciation": "mateu"
+            },
+            {
+              "korean": "공항",
+              "russian": "аэропорт",
+              "pronunciation": "gonghang"
+            },
+            {
+              "korean": "기차역",
+              "russian": "железнодорожный вокзал",
+              "pronunciation": "gichayeok"
+            },
+            {
+              "korean": "버스정류장",
+              "russian": "автобусная остановка",
+              "pronunciation": "beoseujeongyujang"
+            },
+            {
+              "korean": "지하철역",
+              "russian": "станция метро",
+              "pronunciation": "jihacheoryeok"
+            },
+            {
+              "korean": "카페",
+              "russian": "кафе",
+              "pronunciation": "kape"
+            },
+            {
+              "korean": "공원",
+              "russian": "парк",
+              "pronunciation": "gongwon"
+            },
+            {
+              "korean": "호텔",
+              "russian": "отель",
+              "pronunciation": "hotel"
+            },
+            {
+              "korean": "극장",
+              "russian": "кинотеатр/театр",
+              "pronunciation": "geukjang"
+            },
+            {
+              "korean": "약국",
+              "russian": "аптека",
+              "pronunciation": "yakguk"
+            },
+            {
+              "korean": "편의점",
+              "russian": "круглосуточный магазин",
+              "pronunciation": "pyeonuijeom"
+            }
+          ]
+        },
+        {
+          "id": "spaces",
+          "name": "장소/공간",
+          "words": [
+            {
+              "korean": "교실",
+              "russian": "класс/аудитория",
+              "pronunciation": "gyosil"
+            },
+            {
+              "korean": "사무실",
+              "russian": "офис",
+              "pronunciation": "samusil"
+            },
+            {
+              "korean": "화장실",
+              "russian": "туалет",
+              "pronunciation": "hwajangsil"
+            },
+            {
+              "korean": "주방",
+              "russian": "кухня",
+              "pronunciation": "jubang"
+            },
+            {
+              "korean": "부엌",
+              "russian": "кухня",
+              "pronunciation": "bueok"
+            },
+            {
+              "korean": "방",
+              "russian": "комната",
+              "pronunciation": "bang"
+            },
+            {
+              "korean": "거실",
+              "russian": "гостиная",
+              "pronunciation": "geosil"
+            },
+            {
+              "korean": "복도",
+              "russian": "коридор",
+              "pronunciation": "bokdo"
+            },
+            {
+              "korean": "주차장",
+              "russian": "парковка",
+              "pronunciation": "juchajang"
+            },
+            {
+              "korean": "입구",
+              "russian": "вход",
+              "pronunciation": "ipgu"
+            },
+            {
+              "korean": "출구",
+              "russian": "выход",
+              "pronunciation": "chulgu"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "time",
+      "name": "시간 관련",
+      "subcategories": [
+        {
+          "id": "time_basic",
+          "name": "시간",
+          "words": [
+            {
+              "korean": "아침",
+              "russian": "утро",
+              "pronunciation": "achim"
+            },
+            {
+              "korean": "점심",
+              "russian": "полдень/обед",
+              "pronunciation": "jeomsim"
+            },
+            {
+              "korean": "저녁",
+              "russian": "вечер",
+              "pronunciation": "jeonyeok"
+            },
+            {
+              "korean": "밤",
+              "russian": "ночь",
+              "pronunciation": "bam"
+            },
+            {
+              "korean": "새벽",
+              "russian": "рассвет",
+              "pronunciation": "saebyeok"
+            },
+            {
+              "korean": "오전",
+              "russian": "до полудня",
+              "pronunciation": "ojeon"
+            },
+            {
+              "korean": "오후",
+              "russian": "после полудня",
+              "pronunciation": "ohu"
+            },
+            {
+              "korean": "시간",
+              "russian": "время/час",
+              "pronunciation": "sigan"
+            },
+            {
+              "korean": "분",
+              "russian": "минута",
+              "pronunciation": "bun"
+            },
+            {
+              "korean": "초",
+              "russian": "секунда",
+              "pronunciation": "cho"
+            }
+          ]
+        },
+        {
+          "id": "date_period",
+          "name": "날짜/기간",
+          "words": [
+            {
+              "korean": "월요일",
+              "russian": "понедельник",
+              "pronunciation": "woryoil"
+            },
+            {
+              "korean": "화요일",
+              "russian": "вторник",
+              "pronunciation": "hwayoil"
+            },
+            {
+              "korean": "수요일",
+              "russian": "среда",
+              "pronunciation": "suyoil"
+            },
+            {
+              "korean": "목요일",
+              "russian": "четверг",
+              "pronunciation": "mogyoil"
+            },
+            {
+              "korean": "금요일",
+              "russian": "пятница",
+              "pronunciation": "geumyoil"
+            },
+            {
+              "korean": "토요일",
+              "russian": "суббота",
+              "pronunciation": "toyoil"
+            },
+            {
+              "korean": "일요일",
+              "russian": "воскресенье",
+              "pronunciation": "iryoil"
+            },
+            {
+              "korean": "어제",
+              "russian": "вчера",
+              "pronunciation": "eoje"
+            },
+            {
+              "korean": "오늘",
+              "russian": "сегодня",
+              "pronunciation": "oneul"
+            },
+            {
+              "korean": "내일",
+              "russian": "завтра",
+              "pronunciation": "naeil"
+            },
+            {
+              "korean": "주말",
+              "russian": "выходные",
+              "pronunciation": "jumal"
+            },
+            {
+              "korean": "주중",
+              "russian": "будни",
+              "pronunciation": "jujung"
+            },
+            {
+              "korean": "이번 주",
+              "russian": "эта неделя",
+              "pronunciation": "ibeon ju"
+            },
+            {
+              "korean": "다음 주",
+              "russian": "следующая неделя",
+              "pronunciation": "daeum ju"
+            },
+            {
+              "korean": "지난주",
+              "russian": "прошлая неделя",
+              "pronunciation": "jinanju"
+            },
+            {
+              "korean": "매일",
+              "russian": "каждый день",
+              "pronunciation": "maeil"
+            },
+            {
+              "korean": "매주",
+              "russian": "каждую неделю",
+              "pronunciation": "maeju"
+            },
+            {
+              "korean": "매월",
+              "russian": "каждый месяц",
+              "pronunciation": "maewol"
+            },
+            {
+              "korean": "매년",
+              "russian": "каждый год",
+              "pronunciation": "maenyeon"
+            }
+          ]
+        },
+        {
+          "id": "seasons",
+          "name": "계절",
+          "words": [
+            {
+              "korean": "봄",
+              "russian": "весна",
+              "pronunciation": "bom"
+            },
+            {
+              "korean": "여름",
+              "russian": "лето",
+              "pronunciation": "yeoreum"
+            },
+            {
+              "korean": "가을",
+              "russian": "осень",
+              "pronunciation": "gaeul"
+            },
+            {
+              "korean": "겨울",
+              "russian": "зима",
+              "pronunciation": "gyeoul"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "daily_life",
+      "name": "일상생활",
+      "subcategories": [
+        {
+          "id": "basic_actions",
+          "name": "기본 동작",
+          "words": [
+            {
+              "korean": "가다",
+              "russian": "идти",
+              "pronunciation": "gada"
+            },
+            {
+              "korean": "오다",
+              "russian": "приходить",
+              "pronunciation": "oda"
+            },
+            {
+              "korean": "먹다",
+              "russian": "есть",
+              "pronunciation": "meokda"
+            },
+            {
+              "korean": "마시다",
+              "russian": "пить",
+              "pronunciation": "masida"
+            },
+            {
+              "korean": "자다",
+              "russian": "спать",
+              "pronunciation": "jada"
+            },
+            {
+              "korean": "일어나다",
+              "russian": "вставать",
+              "pronunciation": "ireonada"
+            },
+            {
+              "korean": "보다",
+              "russian": "смотреть",
+              "pronunciation": "boda"
+            },
+            {
+              "korean": "듣다",
+              "russian": "слушать",
+              "pronunciation": "deutda"
+            },
+            {
+              "korean": "읽다",
+              "russian": "читать",
+              "pronunciation": "ikda"
+            },
+            {
+              "korean": "쓰다",
+              "russian": "писать",
+              "pronunciation": "sseuda"
+            },
+            {
+              "korean": "말하다",
+              "russian": "говорить",
+              "pronunciation": "malhada"
+            },
+            {
+              "korean": "하다",
+              "russian": "делать",
+              "pronunciation": "hada"
+            },
+            {
+              "korean": "만들다",
+              "russian": "делать/создавать",
+              "pronunciation": "mandeulda"
+            },
+            {
+              "korean": "사다",
+              "russian": "покупать",
+              "pronunciation": "sada"
+            },
+            {
+              "korean": "팔다",
+              "russian": "продавать",
+              "pronunciation": "palda"
+            },
+            {
+              "korean": "주다",
+              "russian": "давать",
+              "pronunciation": "juda"
+            },
+            {
+              "korean": "받다",
+              "russian": "получать",
+              "pronunciation": "batda"
+            },
+            {
+              "korean": "앉다",
+              "russian": "садиться",
+              "pronunciation": "anjda"
+            },
+            {
+              "korean": "서다",
+              "russian": "стоять",
+              "pronunciation": "seoda"
+            },
+            {
+              "korean": "열다",
+              "russian": "открывать",
+              "pronunciation": "yeolda"
+            },
+            {
+              "korean": "닫다",
+              "russian": "закрывать",
+              "pronunciation": "dadda"
+            }
+          ]
+        },
+        {
+          "id": "daily_activities",
+          "name": "일상 활동",
+          "words": [
+            {
+              "korean": "공부하다",
+              "russian": "учиться",
+              "pronunciation": "gongbuhada"
+            },
+            {
+              "korean": "운동하다",
+              "russian": "заниматься спортом",
+              "pronunciation": "undonghada"
+            },
+            {
+              "korean": "쇼핑하다",
+              "russian": "делать покупки",
+              "pronunciation": "syopinghada"
+            },
+            {
+              "korean": "청소하다",
+              "russian": "убираться",
+              "pronunciation": "cheongsohada"
+            },
+            {
+              "korean": "요리하다",
+              "russian": "готовить",
+              "pronunciation": "yorihada"
+            },
+            {
+              "korean": "일하다",
+              "russian": "работать",
+              "pronunciation": "ilhada"
+            },
+            {
+              "korean": "전화하다",
+              "russian": "звонить",
+              "pronunciation": "jeonhwahada"
+            },
+            {
+              "korean": "시작하다",
+              "russian": "начинать",
+              "pronunciation": "sijakada"
+            },
+            {
+              "korean": "끝나다",
+              "russian": "заканчиваться",
+              "pronunciation": "kkeutnada"
+            },
+            {
+              "korean": "만나다",
+              "russian": "встречаться",
+              "pronunciation": "mannada"
+            },
+            {
+              "korean": "기다리다",
+              "russian": "ждать",
+              "pronunciation": "gidarida"
+            },
+            {
+              "korean": "찾다",
+              "russian": "искать",
+              "pronunciation": "chatda"
+            }
+          ]
+        },
+        {
+          "id": "emotions_states",
+          "name": "감정/상태",
+          "words": [
+            {
+              "korean": "좋다",
+              "russian": "хороший",
+              "pronunciation": "jota"
+            },
+            {
+              "korean": "싫다",
+              "russian": "неприятный",
+              "pronunciation": "silta"
+            },
+            {
+              "korean": "기쁘다",
+              "russian": "радостный",
+              "pronunciation": "gippeuda"
+            },
+            {
+              "korean": "슬프다",
+              "russian": "грустный",
+              "pronunciation": "seulpeuda"
+            },
+            {
+              "korean": "행복하다",
+              "russian": "счастливый",
+              "pronunciation": "haengbokhada"
+            },
+            {
+              "korean": "피곤하다",
+              "russian": "уставший",
+              "pronunciation": "pigonhada"
+            },
+            {
+              "korean": "바쁘다",
+              "russian": "занятый",
+              "pronunciation": "bappeuda"
+            },
+            {
+              "korean": "힘들다",
+              "russian": "трудный",
+              "pronunciation": "himdeulda"
+            },
+            {
+              "korean": "아프다",
+              "russian": "больной",
+              "pronunciation": "apeuda"
+            },
+            {
+              "korean": "배고프다",
+              "russian": "голодный",
+              "pronunciation": "baegopeuda"
+            },
+            {
+              "korean": "덥다",
+              "russian": "жарко",
+              "pronunciation": "deopda"
+            },
+            {
+              "korean": "춥다",
+              "russian": "холодно",
+              "pronunciation": "chupda"
+            },
+            {
+              "korean": "맛있다",
+              "russian": "вкусный",
+              "pronunciation": "masitda"
+            },
+            {
+              "korean": "맛없다",
+              "russian": "невкусный",
+              "pronunciation": "maeomneunda"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "items",
+      "name": "물건/소지품",
+      "subcategories": [
+        {
+          "id": "personal_items",
+          "name": "소지품",
+          "words": [
+            {
+              "korean": "책",
+              "russian": "книга",
+              "pronunciation": "chaek"
+            },
+            {
+              "korean": "가방",
+              "russian": "сумка",
+              "pronunciation": "gabang"
+            },
+            {
+              "korean": "연필",
+              "russian": "карандаш",
+              "pronunciation": "yeonpil"
+            },
+            {
+              "korean": "펜",
+              "russian": "ручка",
+              "pronunciation": "pen"
+            },
+            {
+              "korean": "지갑",
+              "russian": "кошелёк",
+              "pronunciation": "jigap"
+            },
+            {
+              "korean": "열쇠",
+              "russian": "ключ",
+              "pronunciation": "yeolsoe"
+            },
+            {
+              "korean": "우산",
+              "russian": "зонт",
+              "pronunciation": "usan"
+            },
+            {
+              "korean": "휴대전화",
+              "russian": "мобильный телефон",
+              "pronunciation": "hyudaejeolhwa"
+            },
+            {
+              "korean": "핸드폰",
+              "russian": "мобильный телефон",
+              "pronunciation": "haendeupon"
+            },
+            {
+              "korean": "컴퓨터",
+              "russian": "компьютер",
+              "pronunciation": "keompyuteo"
+            },
+            {
+              "korean": "신문",
+              "russian": "газета",
+              "pronunciation": "sinmun"
+            },
+            {
+              "korean": "잡지",
+              "russian": "журнал",
+              "pronunciation": "japji"
+            },
+            {
+              "korean": "안경",
+              "russian": "очки",
+              "pronunciation": "angyeong"
+            },
+            {
+              "korean": "시계",
+              "russian": "часы",
+              "pronunciation": "sigye"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "food_drink",
+      "name": "음식/음료",
+      "subcategories": [
+        {
+          "id": "food",
+          "name": "음식",
+          "words": [
+            {
+              "korean": "밥",
+              "russian": "рис/еда",
+              "pronunciation": "bap"
+            },
+            {
+              "korean": "국",
+              "russian": "суп",
+              "pronunciation": "guk"
+            },
+            {
+              "korean": "김치",
+              "russian": "кимчи",
+              "pronunciation": "gimchi"
+            },
+            {
+              "korean": "빵",
+              "russian": "хлеб",
+              "pronunciation": "ppang"
+            },
+            {
+              "korean": "과일",
+              "russian": "фрукты",
+              "pronunciation": "gwail"
+            },
+            {
+              "korean": "채소",
+              "russian": "овощи",
+              "pronunciation": "chaeso"
+            },
+            {
+              "korean": "고기",
+              "russian": "мясо",
+              "pronunciation": "gogi"
+            },
+            {
+              "korean": "생선",
+              "russian": "рыба",
+              "pronunciation": "saengseon"
+            },
+            {
+              "korean": "달걀",
+              "russian": "яйцо",
+              "pronunciation": "dalgyar"
+            },
+            {
+              "korean": "라면",
+              "russian": "рамён",
+              "pronunciation": "ramyeon"
+            },
+            {
+              "korean": "김밥",
+              "russian": "кимбап",
+              "pronunciation": "gimbap"
+            },
+            {
+              "korean": "떡볶이",
+              "russian": "токпокки",
+              "pronunciation": "tteokbokki"
+            }
+          ]
+        },
+        {
+          "id": "drinks",
+          "name": "음료",
+          "words": [
+            {
+              "korean": "물",
+              "russian": "вода",
+              "pronunciation": "mul"
+            },
+            {
+              "korean": "커피",
+              "russian": "кофе",
+              "pronunciation": "keopi"
+            },
+            {
+              "korean": "차",
+              "russian": "чай",
+              "pronunciation": "cha"
+            },
+            {
+              "korean": "주스",
+              "russian": "сок",
+              "pronunciation": "juseu"
+            },
+            {
+              "korean": "우유",
+              "russian": "молоко",
+              "pronunciation": "uyu"
+            },
+            {
+              "korean": "음료수",
+              "russian": "напиток",
+              "pronunciation": "eumryo-su"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "numbers",
+      "name": "숫자/수량",
+      "subcategories": [
+        {
+          "id": "basic_numbers",
+          "name": "기본 숫자",
+          "words": [
+            {
+              "korean": "하나",
+              "russian": "один",
+              "pronunciation": "hana"
+            },
+            {
+              "korean": "둘",
+              "russian": "два",
+              "pronunciation": "dul"
+            },
+            {
+              "korean": "셋",
+              "russian": "три",
+              "pronunciation": "set"
+            },
+            {
+              "korean": "넷",
+              "russian": "четыре",
+              "pronunciation": "net"
+            },
+            {
+              "korean": "다섯",
+              "russian": "пять",
+              "pronunciation": "daseot"
+            },
+            {
+              "korean": "여섯",
+              "russian": "шесть",
+              "pronunciation": "yeoseot"
+            },
+            {
+              "korean": "일곱",
+              "russian": "семь",
+              "pronunciation": "ilgop"
+            },
+            {
+              "korean": "여덟",
+              "russian": "восемь",
+              "pronunciation": "yeodeol"
+            },
+            {
+              "korean": "아홉",
+              "russian": "девять",
+              "pronunciation": "ahop"
+            },
+            {
+              "korean": "열",
+              "russian": "десять",
+              "pronunciation": "yeol"
+            },
+            {
+              "korean": "십",
+              "russian": "десять",
+              "pronunciation": "sip"
+            },
+            {
+              "korean": "백",
+              "russian": "сто",
+              "pronunciation": "baek"
+            },
+            {
+              "korean": "천",
+              "russian": "тысяча",
+              "pronunciation": "cheon"
+            },
+            {
+              "korean": "만",
+              "russian": "десять тысяч",
+              "pronunciation": "man"
+            }
+          ]
+        },
+        {
+          "id": "order",
+          "name": "순서",
+          "words": [
+            {
+              "korean": "첫 번째",
+              "russian": "первый",
+              "pronunciation": "cheot beonjjae"
+            },
+            {
+              "korean": "두 번째",
+              "russian": "второй",
+              "pronunciation": "du beonjjae"
+            },
+            {
+              "korean": "세 번째",
+              "russian": "третий",
+              "pronunciation": "se beonjjae"
+            },
+            {
+              "korean": "마지막",
+              "russian": "последний",
+              "pronunciation": "majimak"
+            }
+          ]
+        },
+        {
+          "id": "quantity",
+          "name": "수량 표현",
+          "words": [
+            {
+              "korean": "많다",
+              "russian": "много",
+              "pronunciation": "manta"
+            },
+            {
+              "korean": "적다",
+              "russian": "мало",
+              "pronunciation": "jeokda"
+            },
+            {
+              "korean": "크다",
+              "russian": "большой",
+              "pronunciation": "keuda"
+            },
+            {
+              "korean": "작다",
+              "russian": "маленький",
+              "pronunciation": "jakda"
+            },
+            {
+              "korean": "길다",
+              "russian": "длинный",
+              "pronunciation": "gilda"
+            },
+            {
+              "korean": "짧다",
+              "russian": "короткий",
+              "pronunciation": "jjalda"
+            },
+            {
+              "korean": "무겁다",
+              "russian": "тяжёлый",
+              "pronunciation": "mugyeopda"
+            },
+            {
+              "korean": "가볍다",
+              "russian": "лёгкий",
+              "pronunciation": "gabyeopda"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "location",
+      "name": "위치/방향",
+      "subcategories": [
+        {
+          "id": "directions",
+          "name": "방향",
+          "words": [
+            {
+              "korean": "위",
+              "russian": "верх",
+              "pronunciation": "wi"
+            },
+            {
+              "korean": "아래",
+              "russian": "низ",
+              "pronunciation": "arae"
+            },
+            {
+              "korean": "앞",
+              "russian": "перед",
+              "pronunciation": "ap"
+            },
+            {
+              "korean": "뒤",
+              "russian": "зад",
+              "pronunciation": "dwi"
+            },
+            {
+              "korean": "오른쪽",
+              "russian": "право",
+              "pronunciation": "oreunjjok"
+            },
+            {
+              "korean": "왼쪽",
+              "russian": "лево",
+              "pronunciation": "oenjjok"
+            },
+            {
+              "korean": "안",
+              "russian": "внутри",
+              "pronunciation": "an"
+            },
+            {
+              "korean": "밖",
+              "russian": "снаружи",
+              "pronunciation": "bak"
+            },
+            {
+              "korean": "옆",
+              "russian": "рядом",
+              "pronunciation": "yeop"
+            },
+            {
+              "korean": "근처",
+              "russian": "около",
+              "pronunciation": "geuncheo"
+            },
+            {
+              "korean": "중간",
+              "russian": "середина",
+              "pronunciation": "jungan"
+            },
+            {
+              "korean": "건너편",
+              "russian": "напротив",
+              "pronunciation": "geonneopyeon"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weather",
+      "name": "날씨",
+      "subcategories": [
+        {
+          "id": "weather_basic",
+          "name": "날씨",
+          "words": [
+            {
+              "korean": "날씨",
+              "russian": "погода",
+              "pronunciation": "nalssi"
+            },
+            {
+              "korean": "비",
+              "russian": "дождь",
+              "pronunciation": "bi"
+            },
+            {
+              "korean": "눈",
+              "russian": "снег",
+              "pronunciation": "nun"
+            },
+            {
+              "korean": "바람",
+              "russian": "ветер",
+              "pronunciation": "baram"
+            },
+            {
+              "korean": "맑다",
+              "russian": "ясный",
+              "pronunciation": "makda"
+            },
+            {
+              "korean": "흐리다",
+              "russian": "облачный",
+              "pronunciation": "heurida"
+            },
+            {
+              "korean": "더우다",
+              "russian": "жаркий",
+              "pronunciation": "deouda"
+            },
+            {
+              "korean": "추우다",
+              "russian": "холодный",
+              "pronunciation": "chuuda"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
