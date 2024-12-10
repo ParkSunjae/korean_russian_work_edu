@@ -45,10 +45,13 @@ export default function VowelsPage() {
         <div className="mb-6">
           <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors duration-200">
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">뒤로 가기</span>
+            <span className="font-medium">뒤로 가기 / Назад</span>
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">한글 모음</h1>
-          <p className="mt-2 text-gray-600">총 21개의 기본 모음과 그 발음을 배워보세요.</p>
+          <h1 className="text-3xl font-bold text-gray-900">한글 모음 / Корейские гласные</h1>
+          <p className="mt-2 text-gray-600">
+            총 21개의 기본 모음과 그 발음을 배워보세요.
+            <span className="block text-sm mt-1">Изучите 21 базовую гласную букву и их произношение.</span>
+          </p>
         </div>
 
         {/* 모음 그리드 */}

@@ -117,11 +117,14 @@ export default function SyllablesPage() {
 
       {/* 모음 선택 영역 */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">자음+모음</h1>
-        <p className="mt-2 text-gray-600">자음과 모음을 선택하여 글자를 만들어보세요</p>
+        <h1 className="text-3xl font-bold text-gray-900">자음+모음 / Согласные+гласные</h1>
+        <p className="mt-2 text-gray-600">
+          자음과 모음을 선택하여 글자를 만들어보세요
+          <span className="block text-sm mt-1">Выберите согласные и гласные буквы, чтобы создать слоги</span>
+        </p>
 
         <div className="mt-4">
-          <h3 className="text-sm sm:text-lg font-semibold mb-2">모음 선택</h3>
+          <h3 className="text-sm sm:text-lg font-semibold mb-2">모음 선택 / Выбор гласной</h3>
           <div className="flex flex-wrap gap-2">
             {vowels.map((vowel) => (
               <button

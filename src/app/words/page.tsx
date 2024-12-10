@@ -422,14 +422,22 @@ export default function WordsPage() {
         {/* 검색 섹션 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearch}
-              onKeyDown={handleKeyDown}
-              placeholder="단어 검색 / Поиск слов"
-              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
-            />
+            <div className="flex-1 flex gap-2">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearch}
+                onKeyDown={handleKeyDown}
+                placeholder="단어 검색 / Поиск слов"
+                className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
+              />
+              <button onClick={handleSearchClick} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                검색
+              </button>
+              <button onClick={handleReset} className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
+                초기화
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 mt-2">
