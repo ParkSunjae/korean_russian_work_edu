@@ -10,15 +10,16 @@ interface MenuLinkProps {
   menuNameRu: string;
   children: React.ReactNode;
   className?: string;
+  onNavigate?: () => void;
 }
 
-export default function MenuLink({ href, menuId, menuName, menuNameRu, children, className = "" }: MenuLinkProps) {
+export default function MenuLink({ href, menuId, menuName, menuNameRu, children, className = "", onNavigate }: MenuLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href;
 
-  const updateMenuStats = async () => {
+  const handleClick = async () => {
     try {
-      const response = await fetch("/api/statistics/menu", {
+      await fetch("/api/statistics/menu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -28,16 +29,15 @@ export default function MenuLink({ href, menuId, menuName, menuNameRu, children,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update menu stats");
-      }
+      onNavigate?.();
     } catch (error) {
       console.error("Failed to update menu stats:", error);
+      onNavigate?.();
     }
   };
 
   return (
-    <Link href={href} onClick={updateMenuStats} className={`${className} ${isActive ? "bg-indigo-50 text-indigo-600" : ""}`}>
+    <Link href={href} onClick={handleClick} className={`${className} ${isActive ? "bg-indigo-50 text-indigo-600" : ""}`}>
       {children}
     </Link>
   );

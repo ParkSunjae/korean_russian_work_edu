@@ -12,6 +12,33 @@ const TIME_LIMITS = {
   reading: 60,
 };
 
+interface ExampleDialog {
+  첫발화: string;
+  마지막발화?: string;
+}
+
+interface ExampleQuestion {
+  본문?: string;
+  질문?: string;
+  대화내용?: ExampleDialog;
+  답변보기: string[];
+  correct: string | number;
+}
+
+interface Example {
+  문제번호: string;
+  순서: number;
+  지시문: string;
+  보기대화: ExampleQuestion;
+  적용문제: number[];
+}
+
+interface TopikExample {
+  예제문제: {
+    [key: string]: Example;
+  };
+}
+
 export default function ExamPage() {
   const params = useParams();
   const router = useRouter();
@@ -119,11 +146,17 @@ export default function ExamPage() {
 
   const currentQuestion = test?.questions[currentQuestionIndex];
 
-  const handlePlayPronunciation = (text: string, language: "ko" | "ru") => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language === "ko" ? "ko-KR" : "ru-RU";
-    speechSynthesis.speak(utterance);
-  };
+  const handlePlayPronunciation = useCallback(async (text: string, lang: string) => {
+    if (!text) return;
+
+    try {
+      const audio = new Audio(`/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`);
+      await audio.play();
+    } catch (error) {
+      console.error("Failed to play audio:", error);
+      alert("오디오 재생에 실패했습니다.");
+    }
+  }, []);
 
   const handleAnswerSelect = (optionId: string) => {
     if (!currentQuestion) return;
@@ -163,14 +196,25 @@ export default function ExamPage() {
 
   // 예제 표시 여부 처리
   useEffect(() => {
-    if (currentQuestion) {
-      const example = getCurrentExample();
-      setShowingExample(!!example);
-      if (example) {
-        setSelectedExampleType(example.exampleNumber);
+    if (examples && currentQuestion) {
+      // 현재 문제에 해당하는 예제 찾기
+      let foundExampleType = null;
+      for (const [type, example] of Object.entries(examples.예제문제)) {
+        if (example.적용문제.includes(currentQuestion.number)) {
+          foundExampleType = type;
+          break;
+        }
+      }
+
+      if (foundExampleType) {
+        setSelectedExampleType(foundExampleType);
+        setShowingExample(true);
+      } else {
+        // 해당하는 예제가 없으면 예제 숨기기
+        setShowingExample(false);
       }
     }
-  }, [currentQuestion, getCurrentExample]);
+  }, [currentQuestion, examples]);
 
   // 시험 완료 처리
   const handleComplete = () => {
@@ -180,6 +224,82 @@ export default function ExamPage() {
     const answersString = encodeURIComponent(JSON.stringify(answers));
     router.push(`/exams/${examId}/result?answers=${answersString}`);
   };
+
+  const renderExample = (example: Example) => {
+    const { 보기대화 } = example;
+
+    return (
+      <>
+        {/* 보문 표시 */}
+        {보기대화.본문 && (
+          <div className="text-lg leading-relaxed bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
+            {test?.testInfo.type === "listening" && 보기대화.대화내용 ? (
+              <>
+                <div>{보기대화.대화내용.첫발화}</div>
+                {보기대화.대화내용.마지막발화 && <div>{보기대화.대화내용.마지막발화}</div>}
+              </>
+            ) : (
+              보기대화.본문
+            )}
+          </div>
+        )}
+        {/* 질문 표시 */}
+        {보기대화.질문 && <div className="text-lg font-medium mt-4 p-4 bg-gray-50 rounded-lg">{보기대화.질문}</div>}
+        {/* 보기 표시 */}
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          {보기대화.답변보기.map((option: string, index: number) => {
+            const isCorrect = String(보기대화.correct) === String(index + 1);
+            return (
+              <div
+                key={index}
+                className={`text-sm p-3 rounded-lg transition-colors ${
+                  isCorrect ? "bg-blue-50 border border-blue-200 text-blue-700" : "bg-gray-50 text-gray-600"
+                }`}
+              >
+                <span className="mr-2 text-gray-500">({index + 1})</span>
+                {option}
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+  };
+
+  const playTextToSpeech = useCallback(async (text: string, isMale?: boolean) => {
+    try {
+      // 기존 음성 중지
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ko-KR";
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+
+      // 사용 가능한 음성 가져오기
+      const voices = window.speechSynthesis.getVoices();
+      // 한국어 음성 필터링
+      const koreanVoices = voices.filter((voice) => voice.lang.includes("ko"));
+
+      if (koreanVoices.length > 0) {
+        // 남성/여성 음성 선택
+        if (isMale) {
+          // 남성 음성 설정 (pitch를 낮게)
+          utterance.pitch = 0.8;
+        } else {
+          // 여성 음성 설정 (pitch를 높게)
+          utterance.pitch = 1.2;
+        }
+        // 가능한 경우 특정 음성 선택
+        utterance.voice = koreanVoices[0];
+      }
+
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error("TTS 재생 실패:", error);
+      alert("음성 재생에 실패했습니다.");
+    }
+  }, []);
 
   if (isLoading) {
     return <div className="text-center py-8">로딩 중...</div>;
@@ -214,58 +334,12 @@ export default function ExamPage() {
           {/* 문제 내용 */}
           <div className="space-y-6 mb-8">
             {/* 예제 영역 */}
-            {showingExample && (
+            {showingExample && examples && selectedExampleType && (
               <div className="mb-8 bg-gray-50 p-4 rounded-lg">
                 <div className="font-bold mb-2">{selectedExampleType}</div>
-                <div className="text-sm text-gray-600 mb-4">{examples?.예제문제[selectedExampleType!]?.지시문}</div>
+                <div className="text-sm text-gray-600 mb-4">{examples.예제문제[selectedExampleType]?.지시문}</div>
                 <div className="bg-white p-4 rounded border border-gray-200">
-                  <div className="space-y-4">
-                    {(() => {
-                      const example = examples?.예제문제[selectedExampleType!];
-                      if (!example) return null;
-
-                      const { 보기대화 } = example;
-
-                      return (
-                        <>
-                          {/* 보문 표시 */}
-                          {보기대화.본문 && (
-                            <div className="text-lg leading-relaxed bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
-                              {test.testInfo.type === "listening" && 보기대화.대화내용 ? (
-                                <>
-                                  <div>{보기대화.대화내용.첫발화}</div>
-                                  {보기대화.대화내용.마지막발화 && <div>{보기대화.대화내용.마지막발화}</div>}
-                                </>
-                              ) : (
-                                보기대화.본문
-                              )}
-                            </div>
-                          )}
-
-                          {/* 보기 표시 */}
-                          <div className="grid grid-cols-2 gap-2 mt-4">
-                            {보기대화.답변보기.map((option: string, index: number) => {
-                              const isCorrect = String(보기대화.correct) === String(index + 1);
-                              return (
-                                <div
-                                  key={index}
-                                  className={`text-sm p-3 rounded-lg transition-colors ${
-                                    isCorrect ? "bg-blue-50 border border-blue-200 text-blue-700" : "bg-gray-50 text-gray-600"
-                                  }`}
-                                >
-                                  <span className="mr-2 text-gray-500">({index + 1})</span>
-                                  {option}
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* 질문 표시 */}
-                          {보기대화.질문 && <div className="text-lg font-medium mt-4 p-4 bg-gray-50 rounded-lg">{보기대화.질문}</div>}
-                        </>
-                      );
-                    })()}
-                  </div>
+                  <div className="space-y-4">{examples.예제문제[selectedExampleType] && renderExample(examples.예제문제[selectedExampleType])}</div>
                 </div>
               </div>
             )}
@@ -273,8 +347,6 @@ export default function ExamPage() {
             {/* 문제 내용 */}
             <div className="flex justify-between items-start">
               <div className="space-y-4 w-full">
-                <div className="text-lg font-medium">{currentQuestion.number}번</div>
-
                 {/* 읽기 시험 문제 */}
                 {test.testInfo.type === "reading" && (
                   <>
@@ -285,7 +357,8 @@ export default function ExamPage() {
 
                     {/* 대화문/짧은 지문 */}
                     {currentQuestion.context && <div className="text-lg leading-relaxed bg-gray-50 p-4 rounded-lg">{currentQuestion.context}</div>}
-
+                    {/* 질문 */}
+                    {currentQuestion.question && <div className="text-lg font-medium mt-4">{currentQuestion.question}</div>}
                     {/* 순서 배열 문제 */}
                     {currentQuestion.sentences && (
                       <div className="space-y-2">
@@ -308,37 +381,44 @@ export default function ExamPage() {
                         ))}
                       </div>
                     )}
-
-                    {/* 질문 */}
-                    {currentQuestion.question && <div className="text-lg font-medium mt-4">{currentQuestion.question}</div>}
                   </>
                 )}
 
                 {/* 듣기 시험 문제 - 기존 코드 유지 */}
                 {test.testInfo.type === "listening" && (
-                  <>
-                    {currentQuestion.dialogue?.map((line, index) => (
-                      <div key={index} className="text-lg mb-2">
-                        {line.speaker === "man" ? "남자: " : "여자: "}
-                        {line.text}
-                      </div>
-                    ))}
-                    {currentQuestion.text && <div className="text-lg font-medium mt-4">{currentQuestion.text}</div>}
-                  </>
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-4 w-full">
+                      {currentQuestion.dialogue?.map((line, index) => (
+                        <div key={index} className="text-lg mb-2">
+                          {line.speaker === "man" ? "남자: " : "여자: "}
+                          {line.text}
+                        </div>
+                      ))}
+                      {currentQuestion.text && <div className="text-lg font-medium mt-4">{currentQuestion.text}</div>}
+                    </div>
+
+                    {/* 음성 재생 버튼 수정 */}
+                    <button
+                      onClick={() => {
+                        if (currentQuestion.dialogue) {
+                          // 각 대화를 순차적으로 재생
+                          currentQuestion.dialogue.forEach((line, index) => {
+                            setTimeout(() => {
+                              playTextToSpeech(line.text, line.speaker === "man");
+                            }, index * 2000); // 각 대사 사이에 2초 간격
+                          });
+                        } else if (currentQuestion.text) {
+                          playTextToSpeech(currentQuestion.text);
+                        }
+                      }}
+                      className="p-3 rounded-full hover:bg-gray-100 transition-colors"
+                      aria-label="듣기"
+                    >
+                      <Volume2 className="w-6 h-6 text-blue-600" />
+                    </button>
+                  </div>
                 )}
               </div>
-
-              {/* 음성 재생 버튼 */}
-              {test.testInfo.type === "listening" &&
-                (() => {
-                  const text = currentQuestion.dialogue?.[0]?.text;
-                  if (!text) return null;
-                  return (
-                    <button onClick={() => handlePlayPronunciation(text, "ko")} className="p-2 rounded-full hover:bg-gray-100">
-                      <Volume2 className="w-5 h-5 text-gray-600" />
-                    </button>
-                  );
-                })()}
             </div>
 
             {/* 답안 선택 영역 */}

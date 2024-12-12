@@ -1,20 +1,29 @@
 "use client";
 
+import { useEffect } from "react";
 import Navigation from "@/components/Navigation";
 
-export default function ClientLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      navigator.sendBeacon("/api/statistics/visitor");
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="w-64 shrink-0 border-r border-gray-200 bg-white">
+    <div className="flex min-h-screen">
+      <div className="hidden md:block md:w-64 md:fixed md:inset-y-0 md:left-0">
         <Navigation />
       </div>
-      <main className="flex-1 px-4 py-4 sm:px-6 lg:px-8">
-        {children}
-      </main>
+      <div className="md:hidden">
+        <Navigation />
+      </div>
+      <main className="flex-1 md:ml-64 overflow-y-auto">{children}</main>
     </div>
   );
-} 
+}

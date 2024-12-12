@@ -1,11 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 
 export async function GET() {
-  const adsContent = 'google.com, pub-1590559582284803, DIRECT, f08c47fec0942fa0';
-  
-  return new NextResponse(adsContent, {
+  const filePath = path.join(process.cwd(), "public", "ads.txt");
+  const content = fs.readFileSync(filePath, "utf8");
+
+  return new NextResponse(content, {
     headers: {
-      'Content-Type': 'text/plain',
+      "Content-Type": "text/plain",
     },
   });
-} 
+}

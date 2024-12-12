@@ -26,6 +26,15 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  reactStrictMode: true,
+  async rewrites() {
+    return [
+      {
+        source: "/ads.txt",
+        destination: "/api/ads",
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
