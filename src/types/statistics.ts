@@ -4,7 +4,7 @@ export interface MenuStat {
   name: string;
   menuName: string;
   menuNameRu: string;
-  clickCount: number;
+  count: number;
   lastClicked: string;
 }
 

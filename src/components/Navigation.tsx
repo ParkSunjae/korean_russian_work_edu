@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Home, Type, Languages, BookOpen, MessageSquare, Gamepad, Bell, Menu, X } from "lucide-react";
+import { Home, Type, Languages, BookOpen, MessageSquare, Gamepad, Bell, Menu, X, BarChart2 } from "lucide-react";
 import MenuLink from "./MenuLink";
 
 const menuItems = [
@@ -16,6 +16,13 @@ const menuItems = [
   { id: "exams", href: "/exams", label: "시험", labelRu: "Экзамен", icon: MessageSquare },
   { id: "games", href: "/games", label: "게임", labelRu: "Игры", icon: Gamepad },
   { id: "suggestions", href: "/suggestions", label: "건의사항", labelRu: "Предложения", icon: Bell },
+  {
+    id: "statistics",
+    href: "/statistics",
+    label: "통계",
+    labelRu: "Статистика",
+    icon: BarChart2,
+  },
 ];
 
 export default function Navigation() {

@@ -1,39 +1,8 @@
 "use client";
 
-import { NextResponse } from "next/server";
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import PageHeader from "@/components/layout/PageHeader";
-import type { Statistics } from "@/types/statistics";
-import type { Notice } from "@/types/prisma";
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-
-const MENU_ITEMS = [
-  {
-    id: "exams",
-    name: "TOPIK 시험",
-    nameRu: "TOPIK ТЕСТ",
-    description: "모의고사를 풀어보세요",
-    descriptionRu: "Решайте пробные тесты",
-    href: "/exams",
-  },
-  {
-    id: "games",
-    name: "학습 게임",
-    nameRu: "Обучающие игры",
-    description: "게임으로 한국어를 배워보세요",
-    descriptionRu: "Изучайте корейский через игры",
-    href: "/games",
-  },
-  {
-    id: "suggestions",
-    name: "건의사항",
-    nameRu: "Предложения",
-    description: "개선사항을 제안해주세요",
-    descriptionRu: "Предложите улучшения",
-    href: "/suggestions",
-  },
-];
+import type { Notice } from "@/types/prisma";
 
 interface NoticeRowProps {
   notice: Notice;
@@ -51,7 +20,6 @@ const NoticeRow = ({ notice, isExpanded, onToggle }: NoticeRowProps) => {
         .map((line) => line.trim())
         .filter((line) => line.length > 0)
         .map((line, index) => {
-          // 제목 처리
           if (line.startsWith("# ")) {
             return (
               <h1 key={index} className="text-2xl font-bold mb-4">
@@ -73,8 +41,6 @@ const NoticeRow = ({ notice, isExpanded, onToggle }: NoticeRowProps) => {
               </h3>
             );
           }
-
-          // 목록 처리
           if (line.startsWith("- ")) {
             return (
               <li key={index} className="ml-4 mb-1">
@@ -82,13 +48,9 @@ const NoticeRow = ({ notice, isExpanded, onToggle }: NoticeRowProps) => {
               </li>
             );
           }
-
-          // 구분선 처리
           if (line.startsWith("---")) {
             return <hr key={index} className="my-6 border-t border-gray-300" />;
           }
-
-          // 일반 텍스트
           return (
             <p key={index} className="mb-2">
               {line}
@@ -126,170 +88,57 @@ const NoticeRow = ({ notice, isExpanded, onToggle }: NoticeRowProps) => {
 };
 
 export default function HomePage() {
-  const router = useRouter();
-  const [stats, setStats] = useState<Statistics | null>(null);
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
 
   useEffect(() => {
-    const initializePage = async () => {
+    const fetchNotices = async () => {
       try {
-        // 방문자 수 업데이트
-        await fetch("/api/statistics", {
-          method: "POST",
-          credentials: "include",
-        });
-
-        // 통계 데이터 로드
-        const [statsRes, noticesRes] = await Promise.all([fetch("/api/statistics"), fetch("/api/notices")]);
-
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setStats(statsData);
-        }
-
-        if (noticesRes.ok) {
-          const noticesData = await noticesRes.json();
-          setNotices(noticesData.slice(0, 3));
+        const response = await fetch("/api/notices");
+        const data = await response.json();
+        setNotices(data);
+        if (data.length > 0) {
+          setExpandedNoticeId(data[0].id);
         }
       } catch (error) {
-        console.error("Error initializing page:", error);
-      } finally {
-        setIsLoading(false);
+        console.error("Failed to fetch notices:", error);
       }
     };
 
-    initializePage();
+    fetchNotices();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-2xl font-bold mb-2">로딩 중...</div>
-          <div className="text-gray-600">Загрузка...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <main className="flex min-h-screen flex-col items-center">
-      <div className="w-full max-w-7xl mx-auto px-4 py-8">
-        {/* Header Section */}
-        <section className="w-full text-center mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4">
-            한국어 학습 플랫폼
-            <span className="block text-xl md:text-3xl text-gray-600 mt-2">Платформа изучения корейского языка</span>
-          </h1>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
-            한글 자음, 모음부터 문장까지 단계별로 학습하세요
-            <span className="block mt-1">Изучайте корейский язык шаг за шагом</span>
-          </p>
-        </section>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">TOPIK 학습 / Изучение TOPIK</h1>
 
-        {/* Recent Notices Section */}
-        <section className="w-full max-w-4xl mx-auto mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
-            <h2 className="text-lg md:text-xl font-bold mb-4">공지사항 / Объявления</h2>
-            <div className="overflow-hidden rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">제목 / Заголовок</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-32">날짜 / Дата</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {notices.length > 0 ? (
-                    notices.map((notice) => (
-                      <NoticeRow
-                        key={notice.id}
-                        notice={notice}
-                        isExpanded={expandedNoticeId === notice.id}
-                        onToggle={() => setExpandedNoticeId(expandedNoticeId === notice.id ? null : notice.id)}
-                      />
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={2} className="px-4 py-3 text-center text-gray-500">
-                        공지사항이 없습니다 / Нет объявлений
-                      </td>
-                    </tr>
-                  )}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">사이트 소개 / О сайте</h2>
+          <p className="text-gray-700 mb-2">TOPIK 시험 준비를 위한 한국어 학습 사이트입니다.</p>
+          <p className="text-gray-500 text-sm">Сайт для изучения корейского языка и подготовки к экзамену TOPIK.</p>
+        </div>
+
+        {notices.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+            <h2 className="text-xl font-bold p-6 pb-4">공지사항 / Объявления</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <tbody>
+                  {notices.map((notice) => (
+                    <NoticeRow
+                      key={notice.id}
+                      notice={notice}
+                      isExpanded={expandedNoticeId === notice.id}
+                      onToggle={() => setExpandedNoticeId(expandedNoticeId === notice.id ? null : notice.id)}
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
-        </section>
-
-        {/* Statistics Section */}
-        <section className="w-full max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Visitor Count Card */}
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h2 className="text-lg font-bold mb-3">
-                누적 방문자 수<span className="block text-sm text-gray-600 mt-1">Общее количество посещений</span>
-              </h2>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl md:text-3xl font-bold text-blue-600">{stats?.totalVisits ? stats.totalVisits.toLocaleString() : "0"}</p>
-                <span className="text-gray-500">명</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">마지막 업데이트: {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString("ko-KR") : "-"}</p>
-            </div>
-
-            {/* Menu Selection Count Card */}
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h2 className="text-lg font-bold mb-3">
-                메뉴 선택 횟수
-                <span className="block text-sm text-gray-600 mt-1">Количество выборов меню</span>
-              </h2>
-              <div className="space-y-2">
-                {stats?.menuStats &&
-                  Object.values(stats.menuStats)
-                    .filter((menuStat) => menuStat.name !== "home")
-                    .map((menuStat) => (
-                      <div key={menuStat.name} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded text-sm">
-                        <span className="flex-1">
-                          {menuStat.menuName} / {menuStat.menuNameRu}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-gray-600">{menuStat.clickCount}</span>
-                          <span className="text-xs text-gray-500">회</span>
-                        </div>
-                      </div>
-                    ))}
-              </div>
-            </div>
-
-            {/* Frequently Studied Words Card */}
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h2 className="text-lg font-bold mb-3">
-                자주 학습된 단어
-                <span className="block text-sm text-gray-600 mt-1">Часто изучаемые слова</span>
-              </h2>
-              <div className="space-y-2">
-                {stats?.wordStats && stats.wordStats.length > 0 ? (
-                  stats.wordStats.map((word) => (
-                    <div key={word.korean} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded text-sm">
-                      <span className="flex-1">
-                        {word.korean} ({word.russian})
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-gray-600">{word.listenCount}</span>
-                        <span className="text-xs text-gray-500">회</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-2">학습 기록이 없습니다</div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+        )}
       </div>
-    </main>
+    </div>
   );
 }
